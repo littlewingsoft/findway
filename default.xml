@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="euc-kr"?>
+	<Body>
+		<Info>
+			<Filename>navimap.max</Filename>
+			<ObjectCount>3</ObjectCount>
+			<MeshCount>1</MeshCount>
+			<Object>
+				<Value ID="0">Plane01</Value>
+				<Value ID="1">Camera01</Value>
+				<Value ID="2">Camera01.Target</Value>
+			</Object>
+		</Info>
+		<Object ID="0" Name="Plane01" Class="Editable_mesh">
+			<WorldTM>
+				<Value>[1.0,0.0,0.0,0.0]</Value>
+				<Value>[0.0,1.0,0.0,0.0]</Value>
+				<Value>[0.0,0.0,1.0,0.0]</Value>
+				<Value>[0.0,0.0,0.0,1.0]</Value>
+			</WorldTM>
+			<Vertex>
+				<Value Index="0">[-50,0,-50]</Value>
+				<Value Index="1">[-25,0,-50]</Value>
+				<Value Index="2">[0,0,-50]</Value>
+				<Value Index="3">[25,0,-50]</Value>
+				<Value Index="4">[50,0,-50]</Value>
+				<Value Index="5">[-50,0,-25]</Value>
+				<Value Index="6">[-25,0,-25]</Value>
+				<Value Index="7">[0,0,-25]</Value>
+				<Value Index="8">[25,0,-25]</Value>
+				<Value Index="9">[50,0,-25]</Value>
+				<Value Index="10">[-50,0,0]</Value>
+				<Value Index="11">[-25,0,0]</Value>
+				<Value Index="12">[0,0,0]</Value>
+				<Value Index="13">[25,0,0]</Value>
+				<Value Index="14">[50,0,0]</Value>
+				<Value Index="15">[-50,0,25]</Value>
+				<Value Index="16">[-25,0,25]</Value>
+				<Value Index="17">[0,0,25]</Value>
+				<Value Index="18">[25,0,25]</Value>
+				<Value Index="19">[50,0,25]</Value>
+				<Value Index="20">[-50,0,50]</Value>
+				<Value Index="21">[-25,0,50]</Value>
+				<Value Index="22">[0,0,50]</Value>
+				<Value Index="23">[25,0,50]</Value>
+				<Value Index="24">[50,0,50]</Value>
+			</Vertex>
+			<VertexNormal>
+				<Value Index="0">[0,1,0]</Value>
+				<Value Index="1">[0,1,0]</Value>
+				<Value Index="2">[0,1,0]</Value>
+				<Value Index="3">[0,1,0]</Value>
+				<Value Index="4">[0,1,0]</Value>
+				<Value Index="5">[0,1,0]</Value>
+				<Value Index="6">[0,1,0]</Value>
+				<Value Index="7">[0,1,0]</Value>
+				<Value Index="8">[0,1,0]</Value>
+				<Value Index="9">[0,1,0]</Value>
+				<Value Index="10">[0,1,0]</Value>
+				<Value Index="11">[0,1,0]</Value>
+				<Value Index="12">[0,1,0]</Value>
+				<Value Index="13">[0,1,0]</Value>
+				<Value Index="14">[0,1,0]</Value>
+				<Value Index="15">[0,1,0]</Value>
+				<Value Index="16">[0,1,0]</Value>
+				<Value Index="17">[0,1,0]</Value>
+				<Value Index="18">[0,1,0]</Value>
+				<Value Index="19">[0,1,0]</Value>
+				<Value Index="20">[0,1,0]</Value>
+				<Value Index="21">[0,1,0]</Value>
+				<Value Index="22">[0,1,0]</Value>
+				<Value Index="23">[0,1,0]</Value>
+				<Value Index="24">[0,1,0]</Value>
+			</VertexNormal>
+			<TriIndex>
+				<Value>[5,6,0]</Value>
+				<Value>[1,0,6]</Value>
+				<Value>[6,7,1]</Value>
+				<Value>[2,1,7]</Value>
+				<Value>[8,9,3]</Value>
+				<Value>[4,3,9]</Value>
+				<Value>[11,12,6]</Value>
+				<Value>[7,6,12]</Value>
+				<Value>[12,13,7]</Value>
+				<Value>[8,7,13]</Value>
+				<Value>[13,14,8]</Value>
+				<Value>[9,8,14]</Value>
+				<Value>[15,16,10]</Value>
+				<Value>[11,10,16]</Value>
+				<Value>[16,17,11]</Value>
+				<Value>[12,11,17]</Value>
+				<Value>[17,18,12]</Value>
+				<Value>[13,12,18]</Value>
+				<Value>[20,21,15]</Value>
+				<Value>[16,15,21]</Value>
+				<Value>[22,23,17]</Value>
+				<Value>[18,17,23]</Value>
+				<Value>[23,24,18]</Value>
+				<Value>[19,18,24]</Value>
+			</TriIndex>
+		</Object>
+		<Object ID="1" Name="Camera01" Class="Targetcamera">
+			<WorldTM>
+				<Value>[0.707106,0.0,-0.707108,0.0]</Value>
+				<Value>[-0.612374,0.5,-0.612372,0.0]</Value>
+				<Value>[0.353554,0.866026,0.353553,0.0]</Value>
+				<Value>[-138.752,107.634,-139.58,1.0]</Value>
+			</WorldTM>
+			<FOV>[36.0]</FOV>
+		</Object>
+		<Object ID="2" Name="Camera01.Target" Class="Targetobject">
+			<WorldTM>
+				<Value>[0.707107,0.0,-0.707107,0.0]</Value>
+				<Value>[-0.612373,0.5,-0.612373,0.0]</Value>
+				<Value>[0.353553,0.866026,0.353553,0.0]</Value>
+				<Value>[-75.5441,56.0247,-76.3717,1.0]</Value>
+			</WorldTM>
+		</Object>
+	</Body>

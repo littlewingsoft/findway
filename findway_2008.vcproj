@@ -767,6 +767,10 @@
 			RelativePath=".\findWayViewer.cpp"
 			>
 		</File>
+		<File
+			RelativePath=".\&#51089;&#50629;&#51068;&#51648;.txt"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

@@ -3,6 +3,13 @@
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
 //--------------------------------------------------------------------------------------
+
+#include <atlbase.h>
+#include <atlhost.h>
+#include <iostream>
+#include <sstream>
+#include <map>
+
 #include "DXUT.h"
 #include "DXUTgui.h"
 #include "DXUTmisc.h"
@@ -14,9 +21,16 @@
 
 #include "findWay.h"
 
-CFirstPersonCamera      g_Camera;               // Camera
+#include "webcontrol.h"
 
-//#define DEBUG_VS   // Uncomment this line to debug D3D9 vertex shaders 
+CFirstPersonCamera      g_Camera;               // Camera
+std::wstring g_stPickingTriIndex=L"None Picked";
+std::wstring g_stMousePos = L"Mouse";
+std::wstring g_stPickPos = L"Pick";
+std::wstring g_stNeighBorIndex[3]={ L"-1" , L"-1", L"-1"};
+std::vector<D3DXVECTOR3> pathList;
+
+#define DEBUG_VS   // Uncomment this line to debug D3D9 vertex shaders 
 //#define DEBUG_PS   // Uncomment this line to debug D3D9 pixel shaders 
 
 // CAMERA_SIZE is used for clipping camera movement
@@ -64,6 +78,9 @@ void    CALLBACK OnD3D9DestroyDevice( void* pUserContext );
 
 void    InitApp();
 void    RenderText();
+
+
+
 
 
 //--------------------------------------------------------------------------------------
@@ -169,8 +186,9 @@ void InitApp()
 //    g_Camera.SetClipToBoundary( true, &MinBound, &MaxBound );
     g_Camera.SetEnableYAxisMovement( true );
     g_Camera.SetRotateButtons( false, false, true );
-    g_Camera.SetScalers( 0.01f, 9.0f );
-	
+    
+	float fmoverate = (fw::fFar - fw::fNear) * 0.202f ;
+	g_Camera.SetScalers( 0.01f, fmoverate );
     g_Camera.SetViewParams( &fw::camEyePos, &fw::camLookAt);
 }
 
@@ -186,6 +204,16 @@ void RenderText()
     g_pTxtHelper->SetForegroundColor( D3DXCOLOR( 1.0f, 1.0f, 0.0f, 1.0f ) );
     g_pTxtHelper->DrawTextLine( DXUTGetFrameStats( DXUTIsVsyncEnabled() ) );  
     g_pTxtHelper->DrawTextLine( DXUTGetDeviceStats() );
+	
+	g_pTxtHelper->DrawTextLine( g_stPickingTriIndex.c_str() );
+	g_pTxtHelper->DrawTextLine( g_stMousePos.c_str() );
+	g_pTxtHelper->DrawTextLine( g_stPickPos.c_str() );
+	
+	g_pTxtHelper->DrawTextLine( g_stNeighBorIndex[0].c_str() );
+		g_pTxtHelper->DrawTextLine( g_stNeighBorIndex[1].c_str() );
+			g_pTxtHelper->DrawTextLine( g_stNeighBorIndex[2].c_str() );
+	
+
     g_pTxtHelper->End();
 }
 
@@ -297,6 +325,11 @@ bool CALLBACK ModifyDeviceSettings( DXUTDeviceSettings* pDeviceSettings, void* p
     return true;
 }
 
+#define WEB_SCREEN_LEFT		100
+#define WEB_SCREEN_TOP		100
+#define WEB_SCREEN_RIGHT	700
+#define WEB_SCREEN_BOTTOM	500
+
 
 //--------------------------------------------------------------------------------------
 // Create any D3D9 resources that will live through a device reset (D3DPOOL_MANAGED)
@@ -329,9 +362,8 @@ HRESULT CALLBACK OnD3D9CreateDevice( IDirect3DDevice9* pd3dDevice, const D3DSURF
     // Setup the camera's view parameters
     g_Camera.SetViewParams( &fw::camEyePos, &fw::camLookAt);
     float fAspectRatio = pBackBufferSurfaceDesc->Width / (FLOAT)pBackBufferSurfaceDesc->Height;
-    g_Camera.SetProjParams( D3DXToRadian( fw::fcamFov ), fAspectRatio, 0.1f, 1000.0f );
+    g_Camera.SetProjParams( D3DXToRadian( fw::fcamFov ), fAspectRatio, fw::fNear, fw::fFar  );
 
-	
     return S_OK;
 }
 
@@ -356,7 +388,7 @@ HRESULT CALLBACK OnD3D9ResetDevice( IDirect3DDevice9* pd3dDevice,
 
     // Setup the camera's projection parameters
     float fAspectRatio = pBackBufferSurfaceDesc->Width / (FLOAT)pBackBufferSurfaceDesc->Height;
-    g_Camera.SetProjParams( D3DXToRadian( fw::fcamFov ), fAspectRatio, 0.1f, 1000.0f );
+	g_Camera.SetProjParams( D3DXToRadian( fw::fcamFov ), fAspectRatio, fw::fNear, fw::fFar );
     //g_Camera.SetWindow( pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height );
 
     g_HUD.SetLocation( pBackBufferSurfaceDesc->Width-170, 0 );
@@ -369,27 +401,20 @@ HRESULT CALLBACK OnD3D9ResetDevice( IDirect3DDevice9* pd3dDevice,
 
 		using namespace fw;
 	inline DWORD F2DW( FLOAT f ) { return *((DWORD*)&f); }
-	void RenderMesh( LPDIRECT3DDEVICE9 lpDev )
+	void RenderMesh( LPDIRECT3DDEVICE9 lpDev, const fw::fwMesh& mesh )
 	{
 
 		float fZSlopeScale = -0.5f;
 		float fDepthBias   = 0.0f;
 		D3DXMATRIXA16 matWorld;
 		D3DXMatrixIdentity( &matWorld );
-		lpDev->SetTransform( D3DTS_WORLD, &matWorld );
+		lpDev->SetTransform( D3DTS_WORLD, &mesh.LocalMat );
 
 		lpDev->SetFVF( D3DFVF_XYZ | D3DFVF_DIFFUSE);//
-		int TriCnt = fw::GetNaviMesh().TriBuffer.size();
-		std::vector< fw::Mesh::Triangle>::const_iterator triIt= fw::GetNaviMesh().TriBuffer.begin();
 
-//		fw::Mesh::Triangle pkTri[4096];
-//		std::copy( fw::GetNaviMesh().TriBuffer.begin(), fw::GetNaviMesh().TriBuffer.end(), pkTri );
-		int vtxCnt = fw::GetNaviMesh().VtxBuffer.size();
-
-//		fw::Mesh::Vertex pkVtx[4096];
-//		std::vector<fw::Mesh::Vertex>::const_iterator it = fw::GetNaviMesh().VtxBuffer.begin();
-//		std::copy( fw::GetNaviMesh().VtxBuffer.begin(), fw::GetNaviMesh().VtxBuffer.end(), pkVtx );
-
+		int TriCnt = mesh.TriBuffer.size();
+		//std::vector< fw::Triangle>::const_iterator triIt= mesh.TriBuffer.begin();
+		int vtxCnt = mesh.VtxBuffer.size();
 
 		// Turn off depth bias
 		lpDev->SetRenderState( D3DRS_SLOPESCALEDEPTHBIAS, F2DW(0.0f) );
@@ -400,8 +425,8 @@ HRESULT CALLBACK OnD3D9ResetDevice( IDirect3DDevice9* pd3dDevice,
 		lpDev->SetRenderState( D3DRS_CULLMODE, D3DCULL_NONE );
 	    lpDev->SetRenderState( D3DRS_LIGHTING, FALSE );
 		lpDev->SetRenderState( D3DRS_FILLMODE, D3DFILL_SOLID );
-		lpDev->DrawIndexedPrimitiveUP( D3DPT_TRIANGLELIST, 0,  vtxCnt, TriCnt, (const void*)&(*(GetNaviMesh().TriBuffer.begin())), 
-			D3DFMT_INDEX16, (const void*)&(*(GetNaviMesh().VtxBuffer.begin())), sizeof(Mesh::Vertex));//
+		lpDev->DrawIndexedPrimitiveUP( D3DPT_TRIANGLELIST, 0,  vtxCnt, TriCnt, (const void*)&(*(mesh.TriBuffer.begin())), 
+			D3DFMT_INDEX16, (const void*)&(*(mesh.VtxBuffer.begin())), sizeof(fw::Vertex));//
 
 		// Turn on depth bias
 		lpDev->SetRenderState( D3DRS_SLOPESCALEDEPTHBIAS, F2DW(fZSlopeScale) );
@@ -410,8 +435,8 @@ HRESULT CALLBACK OnD3D9ResetDevice( IDirect3DDevice9* pd3dDevice,
 		lpDev->SetRenderState( D3DRS_CULLMODE, D3DCULL_CCW );
 	    lpDev->SetRenderState( D3DRS_LIGHTING, TRUE );
 		lpDev->SetRenderState( D3DRS_FILLMODE, D3DFILL_WIREFRAME );
-		lpDev->DrawIndexedPrimitiveUP( D3DPT_TRIANGLELIST, 0,  vtxCnt, TriCnt, (const void*)&(*(GetNaviMesh().TriBuffer.begin())), 
-			D3DFMT_INDEX16, (const void*)&(*(GetNaviMesh().VtxBuffer.begin())), sizeof(Mesh::Vertex));//
+		lpDev->DrawIndexedPrimitiveUP( D3DPT_TRIANGLELIST, 0,  vtxCnt, TriCnt, (const void*)&(*(mesh.TriBuffer.begin())), 
+			D3DFMT_INDEX16, (const void*)&(*(mesh.VtxBuffer.begin())), sizeof(fw::Vertex));//
 
 	}
 
@@ -427,7 +452,21 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
 
 HRESULT OnRenderPrimitive(IDirect3DDevice9* pd3dDevice, double fTime, float fElapsedTime, void* pUserContext)
 {
-	RenderMesh( pd3dDevice );
+	RenderMesh( pd3dDevice, fw::GetNaviMesh() );	
+	RenderMesh( pd3dDevice, fw::GetAgentMesh() );
+
+
+	pd3dDevice->SetRenderState(D3DRS_TEXTUREFACTOR, D3DCOLOR_ARGB(0x80, 0xff,0xff,0xff) ); 
+	pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, 1 );
+	pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_TFACTOR );
+	pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1 );
+/*	g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_TFACTOR);
+	g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);*/	
+
+	RenderMesh( pd3dDevice, fw::GetPointMesh() );
+	pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, 0 );
+	pd3dDevice->SetRenderState(D3DRS_TEXTUREFACTOR, 0xffffffff); 
+
 
 	return S_OK;
 }
@@ -499,6 +538,190 @@ void CALLBACK OnD3D9FrameRender( IDirect3DDevice9* pd3dDevice, double fTime, flo
     }
 }
 
+	struct RAY
+	{
+		D3DXVECTOR3 vPickRayDir;
+		D3DXVECTOR3 vPickRayOrig;
+	};
+
+
+	RAY MakeRay()
+	{
+		POINT ptCursor;
+		GetCursorPos(&ptCursor);         // 마우스 좌표를 얻어온다!
+		ScreenToClient(DXUTGetHWND(), &ptCursor);      // 클라이언트의 윈도우 내의 좌표로 변환! 
+
+		float px = 0.0f;
+		float py = 0.0f;
+
+		//2D좌표
+   		std::basic_ostringstream<wchar_t> otstrm;
+		otstrm << "[Mouse]" << ptCursor.x << ", " << ptCursor.y ;
+		g_stMousePos = otstrm.str();
+
+		D3DVIEWPORT9 vp;
+		DXUTGetD3D9Device()->GetViewport(&vp);
+
+		D3DXMATRIXA16 proj;
+		DXUTGetD3D9Device()->GetTransform(D3DTS_PROJECTION,&proj);
+
+		px = ((( 2.0f * ptCursor.x) / vp.Width) -1.0f ) / proj(0,0);
+		py = (((-2.0f * ptCursor.y) / vp.Height) + 1.0f) / proj(1,1);
+
+		RAY ray;
+		ray.vPickRayOrig    = D3DXVECTOR3(0.0f,0.0f,0.0f);
+		ray.vPickRayDir = D3DXVECTOR3(px,py,1.0f);
+
+		return ray;
+	}
+
+	void TransformRay(RAY* ray,D3DXMATRIXA16* T)
+	{
+		// transform the ray's origin, w = 1
+		D3DXVec3TransformCoord(&ray->vPickRayOrig,&ray->vPickRayOrig,T);
+		// transform the ray's direction, w = 0;
+		D3DXVec3TransformNormal(&ray->vPickRayDir,&ray->vPickRayDir,T);
+		D3DXVec3Normalize(&ray->vPickRayDir,&ray->vPickRayDir);
+	}
+
+
+	 // 요곤 DX에 있는 폴리곤 하나와 레이의 충돌 검사 함수!
+
+bool IntersectTriangle( const RAY& ray, D3DXVECTOR3& v0, D3DXVECTOR3& v1, D3DXVECTOR3& v2, float* fDistance, float* u, float* v )
+{
+	// Find vectors for two edges sharing vert0
+	D3DXVECTOR3 edge1 = v1 - v0;
+	D3DXVECTOR3 edge2 = v2 - v0;
+
+	// Begin calculating determinant - also used to calculate U parameter
+	D3DXVECTOR3 pvec;
+	D3DXVec3Cross( &pvec, &ray.vPickRayDir, &edge2 );
+
+	// If determinant is near zero, ray lies in plane of triangle
+	FLOAT det = D3DXVec3Dot( &edge1, &pvec );
+
+	D3DXVECTOR3 tvec;
+	if( det > 0 )
+	{
+		tvec = ray.vPickRayOrig - v0;
+	}
+	else
+	{
+		tvec = v0 - ray.vPickRayOrig;
+		det = -det;
+	}
+
+	if( det < 0.0001f )
+		return false;
+
+	// Calculate U parameter and test bounds
+	*u = D3DXVec3Dot( &tvec, &pvec );
+	if( *u < 0.0f || *u > det )
+		return false;
+
+	// Prepare to test V parameter
+	D3DXVECTOR3 qvec;
+	D3DXVec3Cross( &qvec, &tvec, &edge1 );
+
+	// Calculate V parameter and test bounds
+	*v = D3DXVec3Dot( &ray.vPickRayDir, &qvec );
+	if( *v < 0.0f || *u + *v > det )
+		return false;
+
+	// Calculate t, scale parameters, ray intersects triangle
+	*fDistance = D3DXVec3Dot( &edge2, &qvec );
+	FLOAT fInvDet = 1.0f / det;
+	*fDistance *= fInvDet;
+	*u *= fInvDet;
+	*v *= fInvDet;
+
+	return true;
+}
+
+
+
+
+void OnLButtonDown()
+{
+
+	RAY ray = MakeRay();
+
+   D3DXMATRIXA16 view;
+   DXUTGetD3D9Device()->GetTransform(D3DTS_VIEW, &view);
+   
+   // View를 World로 변환
+   D3DXMATRIXA16 viewInverse;
+   D3DXMatrixInverse(&viewInverse,0,&view);
+   
+   TransformRay(&ray,&viewInverse);
+
+	std::map<float, int> closeIndex;
+
+   g_stPickingTriIndex = L"None Picked ";
+	for( size_t n=0; n< fw::GetNaviMesh().TriBuffer.size(); n++)
+	{
+		fw::Triangle triIndex = fw::GetNaviMesh().TriBuffer[n];
+
+		D3DXVECTOR3 V0 = fw::GetNaviMesh().VtxBuffer[ triIndex.index0 ].pos;
+		D3DXVECTOR3 V1 = fw::GetNaviMesh().VtxBuffer[ triIndex.index1 ].pos;
+		D3DXVECTOR3 V2 = fw::GetNaviMesh().VtxBuffer[ triIndex.index2 ].pos;
+
+		D3DXVECTOR3 wV0,wV1,wV2;
+		// 로컬좌표에서 이루어진 메시정보를 월드좌표로 변환
+		D3DXVec3TransformCoord(&wV0, &V0, &fw::GetNaviMesh().LocalMat  );
+		D3DXVec3TransformCoord(&wV1, &V1, &fw::GetNaviMesh().LocalMat);
+		D3DXVec3TransformCoord(&wV2, &V2, &fw::GetNaviMesh().LocalMat);
+
+
+		//picking polygon IndexList 를 가지고 있다가 최고 적은 크기 값을 유지시킨다.
+		float fBary2,fBary1,fDist;
+		if( IntersectTriangle( ray, V0, V1, V2, &fDist, &fBary1, &fBary2 ) )
+		{
+			closeIndex[ fDist ] = n ;
+		}
+	}
+
+	if( closeIndex.empty() == false )
+	{
+		std::map<float, int> ::iterator it = closeIndex.begin();			
+		int Index =  (*it).second;
+		std::basic_ostringstream<wchar_t> ot;
+		ot << Index;
+
+		g_stPickingTriIndex = L"Picked TriIndex [ ";
+		g_stPickingTriIndex += ot.str();
+		g_stPickingTriIndex += L" ] ";
+
+		D3DXVECTOR3 pickPos = ray.vPickRayOrig + ( ray.vPickRayDir* (*it).first );
+
+		//picking 된곳의 3D좌표
+		std::basic_ostringstream<wchar_t> otstrm;
+		otstrm << "[Pick]" << pickPos.x << ", " <<
+			pickPos.y << ", "<<
+			pickPos.z ;
+		g_stPickPos = otstrm.str();
+
+	
+		fw::fwNaviCell cell = fw::GetNaviMesh().CellBuffer.at( Index );
+
+		std::basic_stringstream<wchar_t> bs;
+		bs<< cell.NeighborTri[0];
+		g_stNeighBorIndex[0] = bs.str();
+
+		bs.str( L""); bs.clear();
+		bs<< cell.NeighborTri[1];
+		g_stNeighBorIndex[1] = bs.str();
+
+		bs.str(L""); bs.clear();
+		bs<< cell.NeighborTri[2];
+		g_stNeighBorIndex[2] = bs.str();
+
+		D3DXVECTOR3 end_pos(0,0,0);
+		//fw::FindWay( Index, end_pos, pathList );
+
+		D3DXMatrixTranslation( &fw::GetPointMesh().LocalMat, pickPos.x, pickPos.y, pickPos.z );
+	}
+}
 
 //--------------------------------------------------------------------------------------
 // Handle messages to the application
@@ -531,12 +754,20 @@ LRESULT CALLBACK MsgProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bo
 
     switch( uMsg )
 	{
+	case WM_PAINT:
+
+		 ValidateRect( hWnd, NULL );
+		 return 0;
+
 	case WM_LBUTTONDOWN:
 		{
 			// Capture the mouse, so if the mouse button is 
 			// released outside the window, we'll get the WM_LBUTTONUP message
 			DXUTGetGlobalTimer()->Stop();
 			SetCapture(hWnd);
+			
+			OnLButtonDown();
+
 			return TRUE;
 		}
 
@@ -612,246 +843,3 @@ void CALLBACK OnD3D9DestroyDevice( void* pUserContext )
 
 
 
-/*
-//--------------------------------------------------------------------------------------
-// Checks if mouse point hits geometry the scene.
-//--------------------------------------------------------------------------------------
-HRESULT Pick()
-{
-    HRESULT hr;
-    D3DXVECTOR3 vPickRayDir;
-    D3DXVECTOR3 vPickRayOrig;
-    IDirect3DDevice9* pD3Device = DXUTGetD3D9Device();
-    const D3DSURFACE_DESC* pd3dsdBackBuffer = DXUTGetD3D9BackBufferSurfaceDesc();
-
-    g_dwNumIntersections = 0L;
-
-    // Get the Pick ray from the mouse position
-    if( GetCapture() )
-    {
-        const D3DXMATRIX *pmatProj = g_Camera.GetProjMatrix();
-
-        POINT ptCursor;
-        GetCursorPos( &ptCursor );
-        ScreenToClient( DXUTGetHWND(), &ptCursor );
-
-        // Compute the vector of the Pick ray in screen space
-        D3DXVECTOR3 v;
-        v.x =  ( ( ( 2.0f * ptCursor.x ) / pd3dsdBackBuffer->Width  ) - 1 ) / pmatProj->_11;
-        v.y = -( ( ( 2.0f * ptCursor.y ) / pd3dsdBackBuffer->Height ) - 1 ) / pmatProj->_22;
-        v.z =  1.0f;
-
-        // Get the inverse view matrix
-        const D3DXMATRIX matView = *g_Camera.GetViewMatrix();
-        const D3DXMATRIX matWorld = *g_Camera.GetWorldMatrix();
-        D3DXMATRIX mWorldView = matWorld * matView;
-        D3DXMATRIX m;
-        D3DXMatrixInverse( &m, NULL, &mWorldView );
-
-        // Transform the screen space Pick ray into 3D space
-        vPickRayDir.x  = v.x*m._11 + v.y*m._21 + v.z*m._31;
-        vPickRayDir.y  = v.x*m._12 + v.y*m._22 + v.z*m._32;
-        vPickRayDir.z  = v.x*m._13 + v.y*m._23 + v.z*m._33;
-        vPickRayOrig.x = m._41;
-        vPickRayOrig.y = m._42;
-        vPickRayOrig.z = m._43;
-    }
-
-    // Get the Picked triangle
-    if( GetCapture() )
-    {
-        LPD3DXMESH              pMesh;
-        
-		fw::GetMesh() 
-
-        if( g_bUseD3DXIntersect )
-        {
-            // When calling D3DXIntersect, one can get just the closest intersection and not
-            // need to work with a D3DXBUFFER.  Or, to get all intersections between the ray and 
-            // the mesh, one can use a D3DXBUFFER to receive all intersections.  We show both
-            // methods.
-            if( !g_bAllHits )
-            {
-                // Collect only the closest intersection
-                BOOL bHit;
-                DWORD dwFace;
-                FLOAT fBary1, fBary2, fDist;
-                D3DXIntersect(pMesh, &vPickRayOrig, &vPickRayDir, &bHit, &dwFace, &fBary1, &fBary2, &fDist, 
-                    NULL, NULL);
-                if( bHit )
-                {
-                    g_dwNumIntersections = 1;
-                    g_IntersectionArray[0].dwFace = dwFace;
-                    g_IntersectionArray[0].fBary1 = fBary1;
-                    g_IntersectionArray[0].fBary2 = fBary2;
-                    g_IntersectionArray[0].fDist = fDist;
-                }
-                else
-                {
-                    g_dwNumIntersections = 0;
-                }
-            }
-            else 
-            {
-                // Collect all intersections
-                BOOL bHit;
-                LPD3DXBUFFER pBuffer = NULL;
-                D3DXINTERSECTINFO* pIntersectInfoArray;
-                if( FAILED( hr = D3DXIntersect(pMesh, &vPickRayOrig, &vPickRayDir, &bHit, NULL, NULL, NULL, NULL, 
-                    &pBuffer, &g_dwNumIntersections) ) )
-                {
-                    SAFE_RELEASE(pMesh);
-                    SAFE_RELEASE(pVB);
-                    SAFE_RELEASE(pIB);
-
-                    return hr;
-                }
-                if( g_dwNumIntersections > 0 )
-                {
-                    pIntersectInfoArray = (D3DXINTERSECTINFO*)pBuffer->GetBufferPointer();
-                    if( g_dwNumIntersections > MAX_INTERSECTIONS )
-                        g_dwNumIntersections = MAX_INTERSECTIONS;
-                    for( DWORD iIntersection = 0; iIntersection < g_dwNumIntersections; iIntersection++ )
-                    {
-                        g_IntersectionArray[iIntersection].dwFace = pIntersectInfoArray[iIntersection].FaceIndex;
-                        g_IntersectionArray[iIntersection].fBary1 = pIntersectInfoArray[iIntersection].U;
-                        g_IntersectionArray[iIntersection].fBary2 = pIntersectInfoArray[iIntersection].V;
-                        g_IntersectionArray[iIntersection].fDist = pIntersectInfoArray[iIntersection].Dist;
-                    }
-                }
-                SAFE_RELEASE( pBuffer );
-            }
-
-        }
-        else
-        {
-            // Not using D3DX
-            DWORD dwNumFaces = g_Mesh.GetMesh()->GetNumFaces();
-            FLOAT fBary1, fBary2;
-            FLOAT fDist;
-            for( DWORD i=0; i<dwNumFaces; i++ )
-            {
-                D3DXVECTOR3 v0 = pVertices[pIndices[3*i+0]].p;
-                D3DXVECTOR3 v1 = pVertices[pIndices[3*i+1]].p;
-                D3DXVECTOR3 v2 = pVertices[pIndices[3*i+2]].p;
-
-                // Check if the Pick ray passes through this point
-                if( IntersectTriangle( vPickRayOrig, vPickRayDir, v0, v1, v2,
-                                       &fDist, &fBary1, &fBary2 ) )
-                {
-                    if( g_bAllHits || g_dwNumIntersections == 0 || fDist < g_IntersectionArray[0].fDist )
-                    {
-                        if( !g_bAllHits )
-                            g_dwNumIntersections = 0;
-                        g_IntersectionArray[g_dwNumIntersections].dwFace = i;
-                        g_IntersectionArray[g_dwNumIntersections].fBary1 = fBary1;
-                        g_IntersectionArray[g_dwNumIntersections].fBary2 = fBary2;
-                        g_IntersectionArray[g_dwNumIntersections].fDist = fDist;
-                        g_dwNumIntersections++;
-                        if( g_dwNumIntersections == MAX_INTERSECTIONS )
-                            break;
-                    }
-                }
-            }
-        }
-
-        // Now, for each intersection, add a triangle to g_pVB and compute texture coordinates
-        if( g_dwNumIntersections > 0 )
-        {
-            D3DVERTEX* v;
-            D3DVERTEX* vThisTri;
-            WORD* iThisTri;
-            D3DVERTEX  v1, v2, v3;
-            INTERSECTION* pIntersection;
-
-            g_pVB->Lock( 0, 0, (void**)&v, 0 );
-
-            for( DWORD iIntersection = 0; iIntersection < g_dwNumIntersections; iIntersection++ )
-            {
-                pIntersection = &g_IntersectionArray[iIntersection];
-
-                vThisTri = &v[iIntersection * 3];
-                iThisTri = &pIndices[3*pIntersection->dwFace];
-                // get vertices hit
-                vThisTri[0] = pVertices[iThisTri[0]];
-                vThisTri[1] = pVertices[iThisTri[1]];
-                vThisTri[2] = pVertices[iThisTri[2]];
-
-                // If all you want is the vertices hit, then you are done.  In this sample, we
-                // want to show how to infer texture coordinates as well, using the BaryCentric
-                // coordinates supplied by D3DXIntersect
-                FLOAT dtu1 = vThisTri[1].tu - vThisTri[0].tu;
-                FLOAT dtu2 = vThisTri[2].tu - vThisTri[0].tu;
-                FLOAT dtv1 = vThisTri[1].tv - vThisTri[0].tv;
-                FLOAT dtv2 = vThisTri[2].tv - vThisTri[0].tv;
-                pIntersection->tu = vThisTri[0].tu + pIntersection->fBary1 * dtu1 + pIntersection->fBary2 * dtu2;
-                pIntersection->tv = vThisTri[0].tv + pIntersection->fBary1 * dtv1 + pIntersection->fBary2 * dtv2;
-            }
-
-            g_pVB->Unlock();
-        }
-
-    }
-
-    return S_OK;
-}
-
-
-//--------------------------------------------------------------------------------------
-// Given a ray origin (orig) and direction (dir), and three vertices of a triangle, this
-// function returns TRUE and the interpolated texture coordinates if the ray intersects 
-// the triangle
-//--------------------------------------------------------------------------------------
-bool IntersectTriangle( const D3DXVECTOR3& orig, const D3DXVECTOR3& dir, 
-                        D3DXVECTOR3& v0, D3DXVECTOR3& v1, D3DXVECTOR3& v2, 
-                        FLOAT* t, FLOAT* u, FLOAT* v )
-{
-    // Find vectors for two edges sharing vert0
-    D3DXVECTOR3 edge1 = v1 - v0;
-    D3DXVECTOR3 edge2 = v2 - v0;
-
-    // Begin calculating determinant - also used to calculate U parameter
-    D3DXVECTOR3 pvec;
-    D3DXVec3Cross( &pvec, &dir, &edge2 );
-
-    // If determinant is near zero, ray lies in plane of triangle
-    FLOAT det = D3DXVec3Dot( &edge1, &pvec );
-
-    D3DXVECTOR3 tvec;
-    if( det > 0 )
-    {
-        tvec = orig - v0;
-    }
-    else
-    {
-        tvec = v0 - orig;
-        det = -det;
-    }
-
-    if( det < 0.0001f )
-        return FALSE;
-
-    // Calculate U parameter and test bounds
-    *u = D3DXVec3Dot( &tvec, &pvec );
-    if( *u < 0.0f || *u > det )
-        return FALSE;
-
-    // Prepare to test V parameter
-    D3DXVECTOR3 qvec;
-    D3DXVec3Cross( &qvec, &tvec, &edge1 );
-
-    // Calculate V parameter and test bounds
-    *v = D3DXVec3Dot( &dir, &qvec );
-    if( *v < 0.0f || *u + *v > det )
-        return FALSE;
-
-    // Calculate t, scale parameters, ray intersects triangle
-    *t = D3DXVec3Dot( &edge2, &qvec );
-    FLOAT fInvDet = 1.0f / det;
-    *t *= fInvDet;
-    *u *= fInvDet;
-    *v *= fInvDet;
-
-    return TRUE;
-}
-*/

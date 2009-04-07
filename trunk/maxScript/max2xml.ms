@@ -79,7 +79,7 @@ g_bSampling			= false
 g_nSampling			= 1
 g_strKeyType		= "Keyframe"
 g_snapObjects		= undefined
-
+TriEdgeList = #()
 -- [MAX quaterion]            [D3D quaternion]
 -- x,y,z,w                    -x,-z,-y,w
 
@@ -114,6 +114,13 @@ struct OBJECT_WEIGHT
 (
 	nBoneCount,
 	vertexSet
+)
+
+struct EdgeIndex
+(
+	xy,
+	yz,
+	zx
 )
 
 fn FindObject name =
@@ -799,22 +806,22 @@ struct ZExport
 	fn WriteTM obj nTabCount =
 	(
 		StackClearAttr()
-		--XMLElementBegin nTabCount g_strLocalTM true
-		--tm = m_oUtil.ConvertToD3D_TM (m_oUtil.GetLocalTM obj)
-		--XMLElementBegin (nTabCount+1) g_strValue false
-			--format "[%,%,%,%]" tm._11 tm._12 tm._13 tm._14 to:m_fileTarget
-			--XMLElementEnd 0 g_strValue
-			--XMLElementBegin (nTabCount+1) g_strValue false
-			--format "[%,%,%,%]" tm._21 tm._22 tm._23 tm._24 to:m_fileTarget
-			--XMLElementEnd 0 g_strValue
-			--XMLElementBegin (nTabCount+1) g_strValue false
-			--format "[%,%,%,%]" tm._31 tm._32 tm._33 tm._34 to:m_fileTarget
-			--XMLElementEnd 0 g_strValue
-			--XMLElementBegin (nTabCount+1) g_strValue false
-			--format "[%,%,%,%]" tm._41 tm._42 tm._43 tm._44 to:m_fileTarget
-			--XMLElementEnd 0 g_strValue
-		--XMLElementEnd nTabCount g_strLocalTM
-		
+		XMLElementBegin nTabCount g_strLocalTM true
+		tm = m_oUtil.ConvertToD3D_TM (m_oUtil.GetLocalTM obj)
+		XMLElementBegin (nTabCount+1) g_strValue false
+			format "[%,%,%,%]" tm._11 tm._12 tm._13 tm._14 to:m_fileTarget
+			XMLElementEnd 0 g_strValue
+			XMLElementBegin (nTabCount+1) g_strValue false
+			format "[%,%,%,%]" tm._21 tm._22 tm._23 tm._24 to:m_fileTarget
+			XMLElementEnd 0 g_strValue
+			XMLElementBegin (nTabCount+1) g_strValue false
+			format "[%,%,%,%]" tm._31 tm._32 tm._33 tm._34 to:m_fileTarget
+			XMLElementEnd 0 g_strValue
+			XMLElementBegin (nTabCount+1) g_strValue false
+			format "[%,%,%,%]" tm._41 tm._42 tm._43 tm._44 to:m_fileTarget
+			XMLElementEnd 0 g_strValue
+		XMLElementEnd nTabCount g_strLocalTM
+/*		
 		StackClearAttr()
 		XMLElementBegin nTabCount g_strWorldTM true
 		tm = m_oUtil.ConvertToD3D_TM (obj.transform)
@@ -831,6 +838,7 @@ struct ZExport
 			format "[%,%,%,%]" tm._41 tm._42 tm._43 tm._44 to:m_fileTarget
 			XMLElementEnd 0 g_strValue
 		XMLElementEnd nTabCount g_strWorldTM
+*/		
 	),
 
 	fn WriteBoundingBox obj nTabCount =
@@ -850,20 +858,62 @@ struct ZExport
 		XMLElementEnd nTabCount g_strBoundingBox
 	),
 	
+	fn WriteMaxObject obj nTabCount =
+	(
+			StackClearAttr()		
+			if classOf obj == Teapot then 
+			(
+				XMLElementBegin (nTabCount) "RADIUS" false
+					format "[%]" obj.radius to:m_fileTarget
+				XMLElementEnd 0 "RADIUS"				
+
+				XMLElementBegin (nTabCount) "SEGMENT" false
+					format "[%]" obj.segments to:m_fileTarget
+				XMLElementEnd 0 "SEGMENT"				
+				
+			)
+			else if classOf obj == Pyramid then
+			(
+				XMLElementBegin (nTabCount) "WIDTH" false
+					format "[%]" obj.width to:m_fileTarget
+				XMLElementEnd 0 "WIDTH"				
+
+				XMLElementBegin (nTabCount) "DEPTH" false
+					format "[%]" obj.depth to:m_fileTarget
+				XMLElementEnd 0 "DEPTH"								
+
+				XMLElementBegin (nTabCount) "HEIGHT" false
+					format "[%]" obj.height to:m_fileTarget
+				XMLElementEnd 0 "HEIGHT"								
+				
+			)
+			else if classOf obj == Targetcamera then
+			(
+				XMLElementBegin (nTabCount) "FOV" false
+					format "[%]" obj.fov  to:m_fileTarget
+				XMLElementEnd 0 "FOV"
+				
+				XMLElementBegin (nTabCount) "NEAR" false
+					format "[%]" obj.nearclip  to:m_fileTarget
+				XMLElementEnd 0 "NEAR"		
+				
+				XMLElementBegin (nTabCount) "FAR" false
+					format "[%]" obj.farclip  to:m_fileTarget
+				XMLElementEnd 0 "FAR"		
+			)	
+			
+	),
+	/*
 	fn WriteCameraInfo obj nTabCount =
 	(
-		if classOf obj != Targetcamera then return undefined
-		StackClearAttr()
-		XMLElementBegin (nTabCount) "FOV" false
-			format "[%]" obj.fov  to:m_fileTarget
-		XMLElementEnd 0 "FOV"
-	),
+		if classOf obj != then return undefined
+
+	),*/
 	
 	fn WriteTriVertex obj nTabCount =
 	(
 		if classOf obj != Editable_mesh then return undefined
 		vertSet = #()
-		
 		vertSet = m_oUtil.GetLocalVertices obj
 		
 		StackClearAttr()
@@ -911,10 +961,10 @@ struct ZExport
 		XMLElementBegin nTabCount g_strTriIndex true
 		for i = 1 to fmSet.count do
 		(
-			StackClearAttr()
-			--StackPushAttr g_strMtrlID (fmSet[i].ID-1)
 			for j = 1 to fmSet[i].faceSet.count do
 			(
+				StackClearAttr()
+				StackPushAttr "Index" ( j-1 )
 				XMLElementBegin (nTabCount+1) g_strValue false
 				format "%" ( m_oUtil.ConvertToD3D_INDEX (getFace obj fmSet[i].faceSet[j]) ) to:m_fileTarget
 				XMLElementEnd 0 g_strValue
@@ -1197,7 +1247,289 @@ struct ZExport
 		)		
 		XMLElementEnd nTabCount g_strVertexWeight
 	),
+
+	fn GetLocalVtx obj vtxIndex =
+	(
+		if obj == undefined  then undefined  
+		if vtxIndex == undefined  then undefined  
+		
+		TM = obj.transform
+		InvTM = inverse TM
+		
+			local vw -- vertex world
+			vw = in coordsys world getvert obj  vtxIndex 
+			vl = vw * InvTM -- vertex local
+
+		vl
+	),
+	
+	fn GetCenterPos obj i =
+	(
+		
+		triIndex = getFace obj i -- 현재 삼각형의 버텍스 인덱스3개를 얻어와서 0,1,2번째 모두 버텍스값으로 치환 하여 중점값계산.
+		vtxA = GetLocalVtx obj  triIndex.x 
+		vtxB = GetLocalVtx obj  triIndex.y
+		vtxC = GetLocalVtx obj  triIndex.z 
+		ret = (vtxA + vtxB + vtxC ) / 3
+		ret
+	),
+	
+fn GetCenter_Edge vtxA vtxB =
+(
+	--format "a[%] b[%]\n" vtxA vtxB
+	ret = vtxA + ( (vtxB - vtxA ) * 0.5 )
+	ret
+),
+
+
+fn IsSameEdge arrEdgeA arrEdgeB =
+(
+	if arrEdgeA.count !=2 or arrEdgeB.count != 2 then
+	(
+		-- "인자의 갯수가 잘못되었어 "
+		undefined
+	)
+
+	tmpArrEdgeA = deepcopy arrEdgeA 
+	tmpArrEdgeB = deepcopy arrEdgeB
+	-- 이것은 유니크한 값만 뽑는것이라서 중복된 값이 있으면
+	-- 추가안된다. 그렇기에 배열 두개의 값이 똑같으면 원소갯수는 2개가 된다.
+	-- 고로 2개가 아니라면 같지 않다는 의미임  배열을 == 비교 할수있는 키워드만 알면
+	-- 이런 삽질 안할테지만 어차피 익스포트하는 부분이므로 큰 문제없다.
+	for n=1 to tmpArrEdgeA.count do
+	appendIfUnique tmpArrEdgeA tmpArrEdgeB[n]
+	
+ret = false
+	
+	--format "test check (%) and (%) \n" arrEdgeA arrEdgeB
+	if  tmpArrEdgeA.count == 2 then 
+		ret = true
+	else 
+		ret=false
+	
+	ret
+),
+
+
+
+fn preCalcNeighbor obj =
+(
+
+retEdge = EdgeIndex -1 -1 -1
+
+	--한변에  ab,bc,ca 총 3쌍을 비교함 총 9회의 비교가 들어감.
+	for srcTriIndex=1 to  obj.numfaces do
+	(
+		srcVtxIndex = getFace obj (srcTriIndex )
+		append TriEdgeList ( copy retEdge )-- 하나씩 추가 해놓는다.
+		
+		for destTriIndex= 1 to obj.numfaces  do		 
+		(
+			if srcTriIndex != destTriIndex then
+			(
+				destVtxIndex = getFace obj (destTriIndex )
+				
+				-- polygon 의 ab, bc, ca 순으로 각 인접면의 polygon Index 를 적어준다.
+				-- 있으면 Index 없으면 -1 셋팅해야되.
+				
+				--format "srcTri[%] srcVtx% destTri[%] destVtx%\n" srcTriIndex srcVtxIndex destTriIndex destVtxIndex
+				
+				if TriEdgeList[srcTriIndex].xy == -1 then
+				(
+					--format "[% %] [ %  %]\n" srcTriIndex srcVtxIndex destTriIndex destVtxIndex
+					local ret = IsSameEdge #(srcVtxIndex.x,srcVtxIndex.y)  #(destVtxIndex.x, destVtxIndex.y)
+					if ret == true then
+					(	--format "[%].xy neighbor = [ % ]\n" srcTriIndex destTriIndex
+						TriEdgeList[srcTriIndex].xy = destTriIndex-1
+					)
+					else
+					(	ret = IsSameEdge #(srcVtxIndex.x,srcVtxIndex.y)  #(destVtxIndex.y, destVtxIndex.z)
+						if ret == true then
+						(	--format "[%].xy neighbor = [ % ]\n" srcTriIndex destTriIndex
+						TriEdgeList[srcTriIndex].xy = destTriIndex-1
+						)
+						else
+						(
+							ret = IsSameEdge #(srcVtxIndex.x,srcVtxIndex.y)  #(destVtxIndex.z, destVtxIndex.x)
+							if ret == true then
+							(	--format "[%].xy neighbor = [ % ]\n" srcTriIndex destTriIndex
+								TriEdgeList[srcTriIndex].xy = destTriIndex-1
+							)
+							--else
+							--	undefined  --format "[%].xy neighbor = [ -1 ]\n" srcTriIndex  --결국 아무것도 못찾음. 
+						)
+					)
+				)
+
+				if TriEdgeList[srcTriIndex].yz == -1 then
+				(
+					
+					ret = IsSameEdge #(srcVtxIndex.y,srcVtxIndex.z)  #(destVtxIndex.x, destVtxIndex.y)
+					if ret == true then
+					(
+						--format "[%].yz neighbor = [ % ]\n" srcTriIndex destTriIndex
+						TriEdgeList[srcTriIndex].yz = destTriIndex-1
+					)
+					else
+						(
+							ret = IsSameEdge #(srcVtxIndex.y,srcVtxIndex.z)  #(destVtxIndex.y, destVtxIndex.z)
+							if ret == true then
+							(
+								--format "[%].yz neighbor = [ % ]\n" srcTriIndex  destTriIndex
+								TriEdgeList[srcTriIndex].yz = destTriIndex-1
+							)
+							else
+							(
+								ret = IsSameEdge #(srcVtxIndex.y,srcVtxIndex.z)  #(destVtxIndex.z, destVtxIndex.x)
+							if ret == true then
+							(	--format "[%].yz neighbor = [ % ]\n" srcTriIndex destTriIndex
+								TriEdgeList[srcTriIndex].yz = destTriIndex-1
+							)
+							--else
+								--format "[%].yz neighbor = [ -1 ]\n" srcTriIndex --undefined --
+							)
+						)
+				)
+				
+
+				if TriEdgeList[srcTriIndex].zx == -1 then
+				(
+					ret = IsSameEdge #(srcVtxIndex.z,srcVtxIndex.x)  #(destVtxIndex.x, destVtxIndex.y)
+					if ret == true then
+					(
+						--format "[%].zx neighbor = [ % ]\n" srcTriIndex destTriIndex
+						TriEdgeList[srcTriIndex].zx = destTriIndex-1
+					)
+					else
+					(
+						ret = IsSameEdge #(srcVtxIndex.z,srcVtxIndex.x)  #(destVtxIndex.y, destVtxIndex.z)
+						if ret == true then
+						(
+							--format "[%].zx neighbor = [ % ]\n" srcTriIndex destTriIndex
+							TriEdgeList[srcTriIndex].zx = destTriIndex-1
+						)
+						else
+						(
+							ret = IsSameEdge #(srcVtxIndex.z,srcVtxIndex.x)  #(destVtxIndex.z, destVtxIndex.x)
+							if ret == true then
+							(--	format "[%].zx neighbor = [ % ]\n" srcTriIndex destTriIndex				
+								TriEdgeList[srcTriIndex].zx = destTriIndex-1
+							)
+							--else
+								--format "[%].zx neighbor = [ -1 ]\n" srcTriIndex  --undefined  --
+						)
+					)
+				)
+				
+				
+			)
+		)
+	)
+	
+
+),
+
+	fn GetNeighbor srcTriIndex =
+	(
+		TriEdgeList[ srcTriIndex ]
+	),
+
+	
+	fn WriteCell obj nTabCount =
+	(
+		-- 삼각형인덱스, 
+		-- 삼각형의중심점, 
+		-- 각변에 인접한 삼각형인덱스 3개 
+		-- 각변의 중간점 3개, 
+		-- 삼각형 중심에서 각변의 중간점 까지 거리 3개
+		
+		-- < NaviCell >
+			--   < value TriIndex="0"  > 
+			--      < Center > [ 10, 10, 10 ] </Center>
+			--      < Neighbor > [ 0,3,2 ] < /Neighbor > 
+			--      < EdgeCenter > -- 각변의 중점.
+			--             <AB> [ 10,13,12 ] (10) < /AB> -- [각변의 중점] ( 삼각형 중심과 중점의 거리 )
+			--             <BC> [ 10,13,12 ] (5) < /BC>		
+			--             <CA> [ 10,13,12 ] (19) < /CA>				
+			--      < /EdgeCenter> 
+			--   < value >
+		-- < NaviCell >
+				
+		if classOf obj != Editable_mesh then return undefined
+		bret = matchPattern obj.name  pattern:"navi_*"
+		if bret == false then return undefined -- navi 가 접두로 붙었는지 체크함. navi가 붙어야 진정한 맵이다.
 			
+		preCalcNeighbor(  obj ) 
+		StackClearAttr()
+		XMLElementBegin nTabCount "NaviCell" true --g_strTriIndex 
+		
+			vertSet = #()
+			vertSet = m_oUtil.GetLocalVertices obj
+		
+			for i = 1 to obj.faces.count  do 
+			(
+				
+				StackClearAttr()
+				StackPushAttr "TriIndex" ( i-1 ) --index
+				
+				triCenter = GetCenterPos obj i 
+				StackPushAttr "Center" ( triCenter ) --index
+				StackPushAttr "Neighbor" ( GetNeighbor i  ) --index
+				
+				XMLElementBegin (nTabCount+1) g_strValue true
+				outIndex = m_oUtil.ConvertToD3D_INDEX (getFace obj i )
+				local tab = ""
+	--			for i = 1 to nTabCount+2 do ( str += "\t" )				
+--				format "%%\n" (str) ( outIndex ) to:m_fileTarget
+				
+				StackClearAttr()
+				XMLElementBegin (nTabCount+2) "EdgeCenter" true
+				
+				tab = ""
+				for tabi = 1 to nTabCount+3 do ( tab += "\t"  )
+				
+				tmpA = (outIndex.x as integer) + 1 -- max 용으로 임시 변경 
+				tmpB = (outIndex.y as integer) + 1 
+				tmpC = (outIndex.z as integer) + 1
+
+				vtxA  =(GetLocalVtx obj tmpA)
+				vtxB =(GetLocalVtx obj tmpB)
+				vtxC = (GetLocalVtx obj tmpC )
+								
+				
+				center_ab = GetCenter_Edge (GetLocalVtx obj tmpA )  (GetLocalVtx obj tmpB)   
+				-- edge 의 center 이고 삼각형의 center 와의 거리를 계산해야 한다.
+				arrivalCost = distance center_ab triCenter
+				format "%<AB>% ( % ) </AB>\n"  (tab) (center_ab) (arrivalCost)  to:m_fileTarget
+				
+				center_bc = GetCenter_Edge (GetLocalVtx obj tmpB )  (GetLocalVtx obj tmpC) 
+				arrivalCost = distance center_bc triCenter
+				format "%<BC>% ( % ) </BC>\n"  (tab) (center_bc) (arrivalCost)	to:m_fileTarget
+
+				center_ca = GetCenter_Edge (GetLocalVtx obj tmpC )  (GetLocalVtx obj tmpA) 
+				arrivalCost = distance center_ca triCenter
+				format "%<CA>% ( % ) </CA>\n"  (tab) (center_ca) (arrivalCost)	to:m_fileTarget				
+
+				XMLElementEnd (nTabCount+2) "EdgeCenter"
+				
+				XMLElementEnd (nTabCount+1) g_strValue
+				
+
+			)
+
+		XMLElementEnd nTabCount "NaviCell"  --g_strTriIndex
+		
+	),
+	
+	fn WriteWireColor obj nTabCount =
+	(
+		if classOf obj != Editable_mesh then return undefined
+		StackClearAttr()
+		XMLElementBegin (nTabCount) "WIRECOLOR" false			
+		format "%, %, %"   (obj.wirecolor.r as integer) (obj.wirecolor.g as integer) (obj.wirecolor.b as integer)  to:m_fileTarget
+		XMLElementEnd 0  "WIRECOLOR"
+	),
+	
 	fn WriteObject obj nTabCount =
 	(
 		if obj == undefined then return undefined
@@ -1208,11 +1540,14 @@ struct ZExport
 		XMLElementBegin nTabCount g_strObject true
 			--WriteParent obj (nTabCount+1)
 			WriteTM obj (nTabCount+1)
-			WriteCameraInfo obj (nTabCount+1)
+			--WriteCameraInfo obj (nTabCount+1)
+			WriteMaxObject obj ( nTabCount + 1 )
 			--WriteBoundingBox obj (nTabCount+1)
 			WriteTriVertex obj (nTabCount+1)
-			WriteVertexNormal obj (nTabCount+1)
+			--WriteVertexNormal obj (nTabCount+1)
 			WriteTriIndex obj (nTabCount+1)
+			WriteCell obj ( nTabCount + 1 )
+			WriteWireColor obj ( nTabCount + 1 )
 			--WriteTexVertex obj (nTabCount+1)
 			--WriteTexIndex obj (nTabCount+1)
 			--WriteVertexWeight obj (nTabCount+1)
@@ -1236,6 +1571,7 @@ struct ZExport
 
 	fn Main =
 	(
+		TriEdgeList=#()
 		StackClearAttr()
 		format "<?xml version=\"1.0\" encoding=\"euc-kr\"?>\n" to:m_fileTarget
 		XMLElementBegin 1 g_strBody true
@@ -1260,6 +1596,7 @@ struct ZExport
 		if $ != undefined then deselect $
 		select $'*snap'
 		delete selection
+		TriEdgeList =undefined
 		g_snapObjects  = undefined
 		XMLElementEnd 1 g_strBody
 	)

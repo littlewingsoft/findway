@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="euc-kr"?>
+	<Body>
+		<Info>
+			<Filename>sphere01.max</Filename>
+			<ObjectCount>1</ObjectCount>
+			<MeshCount>1</MeshCount>
+			<Object>
+				<Value ID="0">Sphere01</Value>
+			</Object>
+		</Info>
+		<Object ID="0" Name="Sphere01" Class="Editable_mesh">
+			<LocalTM>
+				<Value>[1.0,0.0,0.0,0.0]</Value>
+				<Value>[0.0,1.0,0.0,0.0]</Value>
+				<Value>[0.0,0.0,1.0,0.0]</Value>
+				<Value>[0.0,0.0,0.0,1.0]</Value>
+			</LocalTM>
+			<Vertex>
+				<Value Index="0">[0,0,-10]</Value>
+				<Value Index="1">[0,10,0]</Value>
+				<Value Index="2">[-10,0,0]</Value>
+				<Value Index="3">[0,-10,0]</Value>
+				<Value Index="4">[10,0,0]</Value>
+				<Value Index="5">[0,0,10]</Value>
+			</Vertex>
+			<TriIndex>
+				<Value Index="0">[0,2,1]</Value>
+				<Value Index="1">[0,3,2]</Value>
+				<Value Index="2">[0,4,3]</Value>
+				<Value Index="3">[0,1,4]</Value>
+				<Value Index="4">[5,1,2]</Value>
+				<Value Index="5">[5,2,3]</Value>
+				<Value Index="6">[5,3,4]</Value>
+				<Value Index="7">[5,4,1]</Value>
+			</TriIndex>
+			<WIRECOLOR>184, 228, 153</WIRECOLOR>
+		</Object>
+	</Body>

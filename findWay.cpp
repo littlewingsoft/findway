@@ -1,57 +1,67 @@
 #include "dxut.h"
 
+#include <algorithm>
 #include <string>
+#include <vector>
 #include <map>
 
 #include "findWay.h"
 #include "./tinyXml/tinyXml.h"
 
-
+using namespace std;
 
 /*
-Heuristic + ArrivalCost 입니다. 
+4. Heap 만들기
+heap은 End좌표로 부터 거꾸로 start까지의 셀 노드들의 리스트 입니다.
+end cell은 시작점, start cell이 목표점으로 생각합니다.
+EndCell로 부터 인접한 셀들을 구합니다. 이 인접 셀들중 비용이 가장 싼 것을 계산 합니다. 계산식은 Heuristic + ArrivalCost 입니다. 
  
-여기서 Heuristic 은
+여기서 Heristic은
 deltax = (목표점.x - 현제셀중점.x)
 deltay = (목표점.y - 현제셀중점.y)
 deltaz = (목표점.z - 현제셀중점.z)
 max(max(deltax, deltay), deltaz)
-
-으로 계산.
-
-어느 x,z, 를 가지고 y 를 알고싶다면 
-평면의 방정식( 노멀.x, 노멀.y,노멀.z , 거리 ) 를 구해놓자. 거리는 축의원점과 삼각형의원점간 offset 일까?
-
-closeList 와 openList 를 만들자.
-
-closeList : 이미 처리된것.?
-openList. 
-
+값입니다.
+ 
+이웃 셀중 비용이 싼 셀이 현제셀로 되며 같은 방식으로 다시 이웃 셀을 비교 합니다.
+이를 반복 하면 start 셀까지 셀이 이동 됩니다.
+ 
+5. Path 만들기
+앞에서 만든 heap으로 부터 start로 부터 end까지의 mid좌표와 cell을 연속적으로 저장해 둡니다.
+ 
+6. 추가 작업
+삼각형의 중점으로 Cell들을 이동해 다니게 되면 술취한(갈지자) Actor처럼 보이므로, 앞에서 구해진 Path로 부터 line테스트를 하여 직선 경로를 구해 이를 이동 경로로 사용 합니다.
 [출처] 네비게이션 메쉬 + A* (Navigation Mesh + AStar)|작성자 지노윈
 
-
+목표점(루프시작)->  시작점(루프끝)
 
 */
 namespace fw
 {
-	// 곧 지우던가 아니면 node 처리가 되면 정리할것들.
-	static fwMesh g_AgentMesh;
-	static fwMesh g_PointMesh;
+	class exc : public exception 
+	{
+	public:
+		exc()
+		{
+			//assert(0);
+		}
+	};
 
+	// 곧 지우던가 아니면 node 처리가 되면 정리할것들.
 	D3DXVECTOR3 camEyePos,camLookAt;
 	float fcamFov;
 	float fNear, fFar;
 
-
-	// 네비메쉬 담아놓는것.
-	static fwMesh g_NaviMesh;
-
+	static std::map<string,fwMesh> g_MeshList;
 
 	struct testCode
 	{
 		testCode()
 		{
-			fw::NaviMesh_LoadXml( "default.xml" );
+			fw::NaviMesh_Load( "default.xml" );
+			fw::AddMesh_FromXml( "agent.xml" );
+			fw::AddMesh_FromXml( "point.xml" );
+			fw::AddMesh_FromXml( "Sphere01.xml" );
 		}
 	};
 	static testCode tt;	
@@ -153,18 +163,32 @@ namespace fw
 					pkTriElem = pkTriElem ->NextSiblingElement();
 				}
 			}			
-		
+
 		}
 
 		return true;
 	}
 
-	int NaviMesh_LoadXml(const std::string& name )
+
+	void RemoveMesh( const std::string& meshName )
 	{
-		//xmlDocument 로딩하기.
+
+	}
+
+	void RemoveAllMesh()
+	{
+		g_MeshList.clear();
+	}
+
+
+	int AddMesh_FromXml(const std::string& xmlname )
+	{
 		TiXmlDocument doc;
-		doc.LoadFile( name.c_str() );
-		g_NaviMesh.TriBuffer.clear();
+		if( doc.LoadFile( xmlname.c_str() ) == false )
+		{
+			throw exc();
+		}
+
 		TiXmlNode* pkNode = doc.FirstChild( "Body" );
 		if( pkNode )
 		{
@@ -178,19 +202,10 @@ namespace fw
 				if( strClass == "Editable_mesh" )
 				{
 					std::string strName = pkElem ->Attribute( "Name" );
-					if( strName == "navi_ground" )
-					{
-						MakeMesh( pkElem, g_NaviMesh );
-					}
-					else if( strName == "agent" )
-					{
-						MakeMesh( pkElem, g_AgentMesh );
-					}
-					else if( strName == "point" )
-					{
-						MakeMesh( pkElem, g_PointMesh );
-					}
-
+					std::transform( strName.begin(), strName.end(), strName.begin(), tolower );
+					fwMesh mesh;
+					MakeMesh( pkElem, mesh );
+					g_MeshList.insert( std::pair<string, fwMesh>(strName,mesh) );
 				}
 				else if( strClass == "Targetcamera" )
 				{
@@ -244,78 +259,104 @@ namespace fw
 		return 0;
 	}
 
-	void NaviMesh_Release()
+
+
+
+
+	fwMesh& GetNaviMesh()
 	{
+		const std::string szCONVENTION_NAVI = "navi_";
+		map< string, fwMesh >::iterator it = g_MeshList.begin();
+		const string& meshName = (*it).first;
+		while( it != g_MeshList.end() )
+		{
+			size_t i = meshName.find_first_not_of( szCONVENTION_NAVI );
+			if( i == szCONVENTION_NAVI.length()  )
+			{
+				return GetMesh( meshName );
+			}
+
+			it++;
+		}
+
+		throw exc();
+	}
+
+
+	inline fwMesh& GetMesh(const string&name )
+	{
+		std::string strName = name;
+		std::transform( strName.begin(), strName.end(), strName.begin(), tolower );
+		
+		if( g_MeshList.count( strName ) == 0 )
+		{
+			throw exc() ;
+
+		}else
+		{
+			return g_MeshList[strName];
+		}
 
 	}
 
-	const fwMesh & GetNaviMesh()
-	{
-		return g_NaviMesh;
-	}
 
-	fwMesh & GetAgentMesh()
+	const fwMesh& GetMesh_const(const string& name ) 
 	{
-		return g_AgentMesh;
-	}
-
-	fwMesh & GetPointMesh()
-	{
-		return g_PointMesh;
+		return GetMesh( name );
 	}
 
 
-	
-//bool IntersectTriangle( const D3DXVECTOR3& org, const D3DXVECTOR3& dir, D3DXVECTOR3& v0, D3DXVECTOR3& v1, D3DXVECTOR3& v2, float* fDistance, float* u, float* v )
-//{
-//	// Find vectors for two edges sharing vert0
-//	D3DXVECTOR3 edge1 = v1 - v0;
-//	D3DXVECTOR3 edge2 = v2 - v0;
-//
-//	// Begin calculating determinant - also used to calculate U parameter
-//	D3DXVECTOR3 pvec;
-//	D3DXVec3Cross( &pvec, &ray.vPickRayDir, &edge2 );
-//
-//	// If determinant is near zero, ray lies in plane of triangle
-//	FLOAT det = D3DXVec3Dot( &edge1, &pvec );
-//
-//	D3DXVECTOR3 tvec;
-//	if( det > 0 )
-//	{
-//		tvec = ray.vPickRayOrig - v0;
-//	}
-//	else
-//	{
-//		tvec = v0 - ray.vPickRayOrig;
-//		det = -det;
-//	}
-//
-//	if( det < 0.0001f )
-//		return false;
-//
-//	// Calculate U parameter and test bounds
-//	*u = D3DXVec3Dot( &tvec, &pvec );
-//	if( *u < 0.0f || *u > det )
-//		return false;
-//
-//	// Prepare to test V parameter
-//	D3DXVECTOR3 qvec;
-//	D3DXVec3Cross( &qvec, &tvec, &edge1 );
-//
-//	// Calculate V parameter and test bounds
-//	*v = D3DXVec3Dot( &ray.vPickRayDir, &qvec );
-//	if( *v < 0.0f || *u + *v > det )
-//		return false;
-//
-//	// Calculate t, scale parameters, ray intersects triangle
-//	*fDistance = D3DXVec3Dot( &edge2, &qvec );
-//	FLOAT fInvDet = 1.0f / det;
-//	*fDistance *= fInvDet;
-//	*u *= fInvDet;
-//	*v *= fInvDet;
-//
-//	return true;
-//}
+
+	//bool IntersectTriangle( const D3DXVECTOR3& org, const D3DXVECTOR3& dir, D3DXVECTOR3& v0, D3DXVECTOR3& v1, D3DXVECTOR3& v2, float* fDistance, float* u, float* v )
+	//{
+	//	// Find vectors for two edges sharing vert0
+	//	D3DXVECTOR3 edge1 = v1 - v0;
+	//	D3DXVECTOR3 edge2 = v2 - v0;
+	//
+	//	// Begin calculating determinant - also used to calculate U parameter
+	//	D3DXVECTOR3 pvec;
+	//	D3DXVec3Cross( &pvec, &ray.vPickRayDir, &edge2 );
+	//
+	//	// If determinant is near zero, ray lies in plane of triangle
+	//	FLOAT det = D3DXVec3Dot( &edge1, &pvec );
+	//
+	//	D3DXVECTOR3 tvec;
+	//	if( det > 0 )
+	//	{
+	//		tvec = ray.vPickRayOrig - v0;
+	//	}
+	//	else
+	//	{
+	//		tvec = v0 - ray.vPickRayOrig;
+	//		det = -det;
+	//	}
+	//
+	//	if( det < 0.0001f )
+	//		return false;
+	//
+	//	// Calculate U parameter and test bounds
+	//	*u = D3DXVec3Dot( &tvec, &pvec );
+	//	if( *u < 0.0f || *u > det )
+	//		return false;
+	//
+	//	// Prepare to test V parameter
+	//	D3DXVECTOR3 qvec;
+	//	D3DXVec3Cross( &qvec, &tvec, &edge1 );
+	//
+	//	// Calculate V parameter and test bounds
+	//	*v = D3DXVec3Dot( &ray.vPickRayDir, &qvec );
+	//	if( *v < 0.0f || *u + *v > det )
+	//		return false;
+	//
+	//	// Calculate t, scale parameters, ray intersects triangle
+	//	*fDistance = D3DXVec3Dot( &edge2, &qvec );
+	//	FLOAT fInvDet = 1.0f / det;
+	//	*fDistance *= fInvDet;
+	//	*u *= fInvDet;
+	//	*v *= fInvDet;
+	//
+	//	return true;
+	//}
 
 
 	bool InterSectTriangle(const D3DXVECTOR3& m, const D3DXVECTOR3& p0,const D3DXVECTOR3& p1, const D3DXVECTOR3& p2 )
@@ -364,12 +405,116 @@ namespace fw
 		return false;
 	}
 
+	// 현재 쎌에서 가장 가장치가 적은 이웃셀을 찾는다.
+	// 이웃셀이 하나도 없으면(그럴린없지만) -1 반환
+	int FindSmallestHeuristicCell( int cellIndex, const D3DXVECTOR3& endPos, vector<int>& closeList )
+	{
+		const fwMesh& kMesh = GetMesh("navi_ground");
 
-	void FindWay( const int triIndex, const D3DXVECTOR3& start_pos, const D3DXVECTOR3& end_pos, std::vector< D3DXVECTOR3> & pathList )
+		//이웃삼각형 3개를 검사한다.
+		//3개중에 가중치가 가장 큰놈이 어떤것인지 골라보자.
+		std::map<float,int> sortIndexmap; //key가 되는값으로 소팅되므로 가장 마지막것을 선택하면됨.
+		const fwNaviCell& currCell= kMesh.CellBuffer[ cellIndex ];
+
+		for( int indexCnt= 0; indexCnt<3; indexCnt++ )
+		{
+			int neighborIndex = currCell.NeighborTri[ indexCnt ];
+
+			vector<int>::iterator it = find( closeList.begin(), closeList.end() , neighborIndex );
+
+			if( it != closeList.end() ) // 이미 처리한적 있는 애라면 건너뛰기.
+				continue;
+
+			if( neighborIndex != -1 )// 이웃셀이 존재해야 하고 테스트해본셀이 아니어야 한다.
+			{
+				D3DXVECTOR3 delta = endPos - kMesh.CellBuffer[neighborIndex].center;   // currCell.center; //목표점은 시작위치다.
+				float heuristic = max( max( fabs(delta.x), fabs(delta.y) ), fabs(delta.z) );//fabs
+				float cost = currCell.arrivalCost[ indexCnt ];
+				float totalheuristic  = heuristic + cost;
+				sortIndexmap[ totalheuristic  ] = neighborIndex ;
+				closeList.push_back( neighborIndex );
+			}					
+		}
+
+		if( sortIndexmap.empty() == false )
+		{
+			std::map<float,int>::iterator it= sortIndexmap.begin();
+			return (*it).second;
+		}
+
+		return - 1;
+	}
+
+	// 이미 외부에서는 반직선 값만 넘겨주게 해야 될듯. 피킹으로 삼각형(셀) 인덱스를 찾아서 넘겨줬다. 
+	// 일단 pathList 는 최단거리 최적화는 하지않는다.
+	void FindWay( const int endCellIndex, const D3DXVECTOR3& end_pos, const int startCellIndex, const D3DXVECTOR3& start_pos, std::vector< D3DXVECTOR3> & pathList )
 	{
 		pathList.clear();
-		//NaviCell fw::GetNaviCell( triIndex )
-		
+		//deltax = (목표점.x - 현제셀중점.x)
+		//deltay = (목표점.y - 현제셀중점.y)
+		//deltaz = (목표점.z - 현제셀중점.z)
+		//max(max(deltax, deltay), deltaz)
+
+		static std::vector<int> closeList; //이미 검사한것은 여기에 들어가고 
+		closeList.clear();
+
+		// 새로운 이웃셀을 체크할때 여기에 있는지 체크해본뒤 있다면 건너뜀.
+		int  currCell = startCellIndex;
+
+		std::list<int> cellList; // index를 담을 list 
+
+		pathList.push_back( start_pos );
+
+		if( currCell == endCellIndex  )
+		{
+			pathList.push_back( end_pos );
+		}
+		else
+		{
+			const fwMesh& kMesh = GetMesh("navi_ground");
+
+			closeList.push_back(startCellIndex );
+			currCell = FindSmallestHeuristicCell( startCellIndex , end_pos, closeList );
+			if( currCell != endCellIndex )
+			{
+					D3DXVECTOR3 pos = kMesh.CellBuffer[ currCell ].center;
+					pathList.push_back( pos ); // 최종적인 위치를 넣어줄까. 아니면 셀의 인덱스 리스트를 넘겨줄까.
+					// 일단 위치만 원초적으로 넣어주자. 모듈사용자가 계산하게 만들면 골치아픔.
+			}
+
+
+			while( currCell != endCellIndex  )
+			{
+				//시작위치의 셀 인덱스까지 검출되면 모두 찾은것이므로 루프 탈출
+
+				//이웃삼각형 3개를 검사한다.
+				//3개중에 가중치가 가장 큰놈이 어떤것인지 골라보자.
+
+				int smallHeuriCellIndex = FindSmallestHeuristicCell( currCell , end_pos, closeList );
+				
+				if( smallHeuriCellIndex != -1 )
+				{
+					cellList.push_back( smallHeuriCellIndex );
+					currCell = smallHeuriCellIndex;
+
+					if( currCell != endCellIndex )
+					{
+						D3DXVECTOR3 pos = kMesh.CellBuffer[ currCell ].center;
+						pathList.push_back( pos ); // 최종적인 위치를 넣어줄까. 아니면 셀의 인덱스 리스트를 넘겨줄까.
+						// 일단 위치만 원초적으로 넣어주자. 모듈사용자가 계산하게 만들면 골치아픔.
+					}
+					else
+					{
+						// 그리고 길찾기는 종료됨.
+						break;
+					}
+				}
+			}
+
+			// 보간될 길을 모두 찾았으면 end_pos 가 최종위치임.
+				pathList.push_back( end_pos );
+		}
+
 	}
 	// 시작위치와 끝위치를 넣으면 pathList 가 나온다.
 	// 만일 시간이오래 걸리면 비동기 처리를 해야 하려나.
@@ -378,27 +523,27 @@ namespace fw
 	{
 		pathList.clear();
 
-		for( size_t n=0; n< fw::GetNaviMesh().TriBuffer.size(); n++)
-		{
-			fw::Triangle triIndex = fw::GetNaviMesh().TriBuffer[n];
+		//for( size_t n=0; n< fw::GetNaviMesh().TriBuffer.size(); n++)
+		//{
+		//	fw::Triangle triIndex = fw::GetNaviMesh().TriBuffer[n];
 
-			D3DXVECTOR3 V0 = fw::GetNaviMesh().VtxBuffer[ triIndex.index0 ].pos;
-			D3DXVECTOR3 V1 = fw::GetNaviMesh().VtxBuffer[ triIndex.index1 ].pos;
-			D3DXVECTOR3 V2 = fw::GetNaviMesh().VtxBuffer[ triIndex.index2 ].pos;
+		//	D3DXVECTOR3 V0 = fw::GetNaviMesh().VtxBuffer[ triIndex.index0 ].pos;
+		//	D3DXVECTOR3 V1 = fw::GetNaviMesh().VtxBuffer[ triIndex.index1 ].pos;
+		//	D3DXVECTOR3 V2 = fw::GetNaviMesh().VtxBuffer[ triIndex.index2 ].pos;
 
-			D3DXVECTOR3 wV0,wV1,wV2;
-			// 로컬좌표에서 이루어진 메시정보를 월드좌표로 변환
-			D3DXVec3TransformCoord(&wV0, &V0, &fw::GetNaviMesh().LocalMat  );
-			D3DXVec3TransformCoord(&wV1, &V1, &fw::GetNaviMesh().LocalMat);
-			D3DXVec3TransformCoord(&wV2, &V2, &fw::GetNaviMesh().LocalMat);
+		//	D3DXVECTOR3 wV0,wV1,wV2;
+		//	// 로컬좌표에서 이루어진 메시정보를 월드좌표로 변환
+		//	D3DXVec3TransformCoord(&wV0, &V0, &fw::GetNaviMesh().LocalMat  );
+		//	D3DXVec3TransformCoord(&wV1, &V1, &fw::GetNaviMesh().LocalMat);
+		//	D3DXVec3TransformCoord(&wV2, &V2, &fw::GetNaviMesh().LocalMat);
 
-			//picking polygon IndexList 를 가지고 있다가 최고 적은 크기 값을 유지시킨다.
-			//float fBary2=0.0f,fBary1=0.0f,fDist=0.0f;
-			//if( InterSectTriangle( start_pos, V0, V1, V2 ) )
-			{
-			//	break;
-			}
-		}
+		//	//picking polygon IndexList 를 가지고 있다가 최고 적은 크기 값을 유지시킨다.
+		//	//float fBary2=0.0f,fBary1=0.0f,fDist=0.0f;
+		//	//if( InterSectTriangle( start_pos, V0, V1, V2 ) )
+		//	{
+		//	//	break;
+		//	}
+		//}
 
 
 	}

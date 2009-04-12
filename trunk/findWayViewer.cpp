@@ -21,7 +21,11 @@
 
 #include "findWay.h"
 
-#include "webcontrol.h"
+struct PickInfo
+{
+	int cellIndex;
+	D3DXVECTOR3 pos;
+};
 
 CFirstPersonCamera      g_Camera;               // Camera
 std::wstring g_stPickingTriIndex=L"None Picked";
@@ -29,8 +33,8 @@ std::wstring g_stMousePos = L"Mouse";
 std::wstring g_stPickPos = L"Pick";
 std::wstring g_stNeighBorIndex[3]={ L"-1" , L"-1", L"-1"};
 std::vector<D3DXVECTOR3> pathList;
-
-#define DEBUG_VS   // Uncomment this line to debug D3D9 vertex shaders 
+int	g_nCurrentCellIndex = -1;
+//#define DEBUG_VS   // Uncomment this line to debug D3D9 vertex shaders 
 //#define DEBUG_PS   // Uncomment this line to debug D3D9 pixel shaders 
 
 // CAMERA_SIZE is used for clipping camera movement
@@ -367,7 +371,6 @@ HRESULT CALLBACK OnD3D9CreateDevice( IDirect3DDevice9* pd3dDevice, const D3DSURF
     return S_OK;
 }
 
-
 //--------------------------------------------------------------------------------------
 // Create any D3D9 resources that won't live through a device reset (D3DPOOL_DEFAULT) 
 // or that are tied to the back buffer size 
@@ -396,6 +399,8 @@ HRESULT CALLBACK OnD3D9ResetDevice( IDirect3DDevice9* pd3dDevice,
     g_SampleUI.SetLocation( pBackBufferSurfaceDesc->Width-170, pBackBufferSurfaceDesc->Height-350 );
     g_SampleUI.SetSize( 170, 300 );
 
+
+
     return S_OK;
 }
 
@@ -406,8 +411,8 @@ HRESULT CALLBACK OnD3D9ResetDevice( IDirect3DDevice9* pd3dDevice,
 
 		float fZSlopeScale = -0.5f;
 		float fDepthBias   = 0.0f;
-		D3DXMATRIXA16 matWorld;
-		D3DXMatrixIdentity( &matWorld );
+		//D3DXMATRIXA16 matWorld;
+		//D3DXMatrixIdentity( &matWorld );
 		lpDev->SetTransform( D3DTS_WORLD, &mesh.LocalMat );
 
 		lpDev->SetFVF( D3DFVF_XYZ | D3DFVF_DIFFUSE);//
@@ -449,12 +454,29 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
     g_Camera.FrameMove( fElapsedTime );
 }
 
+void DrawCellInfo();
 
 HRESULT OnRenderPrimitive(IDirect3DDevice9* pd3dDevice, double fTime, float fElapsedTime, void* pUserContext)
 {
-	RenderMesh( pd3dDevice, fw::GetNaviMesh() );	
-	RenderMesh( pd3dDevice, fw::GetAgentMesh() );
+	RenderMesh( pd3dDevice, fw::GetMesh("navi_ground") );	
 
+	try
+	{
+		for( size_t n=0; n< pathList.size(); n++)
+		{
+			fw::GetMesh("agent").LocalMat._41 = pathList[n].x;
+			fw::GetMesh("agent").LocalMat._42 = pathList[n].y;
+			fw::GetMesh("agent").LocalMat._43 = pathList[n].z;
+//			D3DXMatrixTranslation( &fw::GetMesh("agent").LocalMat,  pathList[n].x, pathList[n].y, pathList[n].z );
+			RenderMesh( pd3dDevice, fw::GetMesh("agent") );
+		}
+
+		RenderMesh( pd3dDevice, fw::GetMesh("point") );
+	}
+	catch( std::exception ex )
+	{
+		
+	}
 
 	pd3dDevice->SetRenderState(D3DRS_TEXTUREFACTOR, D3DCOLOR_ARGB(0x80, 0xff,0xff,0xff) ); 
 	pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, 1 );
@@ -463,10 +485,10 @@ HRESULT OnRenderPrimitive(IDirect3DDevice9* pd3dDevice, double fTime, float fEla
 /*	g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_TFACTOR);
 	g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);*/	
 
-	RenderMesh( pd3dDevice, fw::GetPointMesh() );
 	pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, 0 );
 	pd3dDevice->SetRenderState(D3DRS_TEXTUREFACTOR, 0xffffffff); 
 
+	DrawCellInfo();
 
 	return S_OK;
 }
@@ -639,11 +661,40 @@ bool IntersectTriangle( const RAY& ray, D3DXVECTOR3& v0, D3DXVECTOR3& v1, D3DXVE
 }
 
 
+void DrawCellInfo()
+{
+	return ;
 
+	if( g_nCurrentCellIndex == -1 )
+		return;
+
+	const fw::fwMesh& kMesh = fw::GetMesh( "navi_ground" );
+	const fw::fwNaviCell& cell = kMesh.CellBuffer.at( g_nCurrentCellIndex );
+
+	
+	fw::GetMesh("Sphere01").LocalMat._41 = cell.center.x;
+	fw::GetMesh("Sphere01").LocalMat._42 = cell.center.y;
+	fw::GetMesh("Sphere01").LocalMat._43 = cell.center.z;
+//	D3DXMatrixTranslation( &fw::GetMesh("Sphere01").LocalMat,  cell.center.x, cell.center.y, cell.center.z );
+	RenderMesh( DXUTGetD3D9Device(), fw::GetMesh("Sphere01") );
+
+	//std::basic_stringstream<wchar_t> bs;
+	//bs<< cell.NeighborTri[0];
+	//g_stNeighBorIndex[0] = bs.str();
+
+	//bs.str( L""); bs.clear();
+	//bs<< cell.NeighborTri[1];
+	//g_stNeighBorIndex[1] = bs.str();
+
+	//bs.str(L""); bs.clear();
+	//bs<< cell.NeighborTri[2];
+	//g_stNeighBorIndex[2] = bs.str();
+
+}
 
 void OnLButtonDown()
 {
-
+	g_nCurrentCellIndex = -1;
 	RAY ray = MakeRay();
 
    D3DXMATRIXA16 view;
@@ -657,21 +708,23 @@ void OnLButtonDown()
 
 	std::map<float, int> closeIndex;
 
-   g_stPickingTriIndex = L"None Picked ";
-	for( size_t n=0; n< fw::GetNaviMesh().TriBuffer.size(); n++)
-	{
-		fw::Triangle triIndex = fw::GetNaviMesh().TriBuffer[n];
+	static std::list<PickInfo> pickList;
 
-		D3DXVECTOR3 V0 = fw::GetNaviMesh().VtxBuffer[ triIndex.index0 ].pos;
-		D3DXVECTOR3 V1 = fw::GetNaviMesh().VtxBuffer[ triIndex.index1 ].pos;
-		D3DXVECTOR3 V2 = fw::GetNaviMesh().VtxBuffer[ triIndex.index2 ].pos;
+	g_stPickingTriIndex = L"None Picked ";
+	const fwMesh& naviMesh = fw::GetMesh("navi_ground");
+	for( size_t n=0; n< naviMesh.TriBuffer.size(); n++)
+	{
+		fw::Triangle triIndex = naviMesh.TriBuffer[n];
+
+		D3DXVECTOR3 V0 = naviMesh.VtxBuffer[ triIndex.index0 ].pos;
+		D3DXVECTOR3 V1 = naviMesh.VtxBuffer[ triIndex.index1 ].pos;
+		D3DXVECTOR3 V2 = naviMesh.VtxBuffer[ triIndex.index2 ].pos;
 
 		D3DXVECTOR3 wV0,wV1,wV2;
 		// 로컬좌표에서 이루어진 메시정보를 월드좌표로 변환
-		D3DXVec3TransformCoord(&wV0, &V0, &fw::GetNaviMesh().LocalMat  );
-		D3DXVec3TransformCoord(&wV1, &V1, &fw::GetNaviMesh().LocalMat);
-		D3DXVec3TransformCoord(&wV2, &V2, &fw::GetNaviMesh().LocalMat);
-
+		D3DXVec3TransformCoord(&wV0, &V0, &naviMesh.LocalMat  );
+		D3DXVec3TransformCoord(&wV1, &V1, &naviMesh.LocalMat);
+		D3DXVec3TransformCoord(&wV2, &V2, &naviMesh.LocalMat);
 
 		//picking polygon IndexList 를 가지고 있다가 최고 적은 크기 값을 유지시킨다.
 		float fBary2,fBary1,fDist;
@@ -688,6 +741,8 @@ void OnLButtonDown()
 		std::basic_ostringstream<wchar_t> ot;
 		ot << Index;
 
+		g_nCurrentCellIndex = Index;
+
 		g_stPickingTriIndex = L"Picked TriIndex [ ";
 		g_stPickingTriIndex += ot.str();
 		g_stPickingTriIndex += L" ] ";
@@ -700,27 +755,36 @@ void OnLButtonDown()
 			pickPos.y << ", "<<
 			pickPos.z ;
 		g_stPickPos = otstrm.str();
-
 	
-		fw::fwNaviCell cell = fw::GetNaviMesh().CellBuffer.at( Index );
 
-		std::basic_stringstream<wchar_t> bs;
-		bs<< cell.NeighborTri[0];
-		g_stNeighBorIndex[0] = bs.str();
+		PickInfo tmpInfo;
+		tmpInfo.cellIndex = Index;
+		tmpInfo.pos = pickPos;
+		pickList.push_back( tmpInfo );
 
-		bs.str( L""); bs.clear();
-		bs<< cell.NeighborTri[1];
-		g_stNeighBorIndex[1] = bs.str();
-
-		bs.str(L""); bs.clear();
-		bs<< cell.NeighborTri[2];
-		g_stNeighBorIndex[2] = bs.str();
-
-		D3DXVECTOR3 end_pos(0,0,0);
-		//fw::FindWay( Index, end_pos, pathList );
-
-		D3DXMatrixTranslation( &fw::GetPointMesh().LocalMat, pickPos.x, pickPos.y, pickPos.z );
+		fw::GetMesh("point").LocalMat._41 =pickPos.x;
+		fw::GetMesh("point").LocalMat._42 =pickPos.y;
+		fw::GetMesh("point").LocalMat._43 =pickPos.z;
+		//D3DXMatrixTranslation( &, pickPos.x, pickPos.y, pickPos.z );
 	}
+
+	if( pickList.size() >= 2 )
+	{
+		std::list<PickInfo>::iterator it = pickList.end();
+		it--;
+		const PickInfo& tmpEndInfo = (*it);
+		int endCellIndex = tmpEndInfo.cellIndex;
+		D3DXVECTOR3 end_pos = tmpEndInfo.pos;
+
+		it = pickList.begin();
+		const PickInfo& tmpStartInfo = (*it);
+		int startCellIndex = tmpStartInfo.cellIndex;
+		D3DXVECTOR3 start_pos = tmpStartInfo.pos;
+
+		fw::FindWay( endCellIndex, end_pos, startCellIndex, start_pos, pathList );
+		pickList.clear();
+	}
+
 }
 
 //--------------------------------------------------------------------------------------

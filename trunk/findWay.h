@@ -103,18 +103,22 @@ namespace fw
 		1: 파일을 찾을수 없다.
 		2: 구버젼이다( 파싱불가 )
 	*/
-	int NaviMesh_LoadXml(const std::string& name ); 
-	inline int NaviMesh_Load(const std::string& name ){ return NaviMesh_LoadXml(name);  }
-	void NaviMesh_Release();
+	void AddMesh( const std::string& fileName ); 
+	void RemoveMesh( const std::string& meshName );
+	void RemoveAllMesh();
 
-	const fwNaviCell& GetNaviCell();
-	const fwMesh & GetNaviMesh();
-	fwMesh& GetAgentMesh();
-	fwMesh& GetPointMesh();
+	//xml과 bin 파일로부터 읽게끔 되있으나 나중엔 파일로더를 통하면 무엇이던 할수있게 중립적인 adaptor 작성.
+	int AddMesh_FromXml(const std::string& name );  //xml 로부터.
+	inline int NaviMesh_Load(const std::string& name ){ return AddMesh_FromXml(name);  } //bin 파일로부터. 
+
+	const fwMesh & GetMesh_const(const std::string & name );
+	fwMesh& GetMesh(const std::string & name )  ;
 	
 	// 시작위치와 끝위치를 넣으면 pathList 가 나온다.
 	// 만일 시간이오래 걸리면 비동기 처리를 해야 하려나.
 	// 일단은 매우 최대한 간단하고 simple 하게 유지함.
 	void FindWay( const D3DXVECTOR3& start_pos, const D3DXVECTOR3& end_pos, std::vector< D3DXVECTOR3> & pathList );
+
+	void FindWay( const int endTriIndex, const D3DXVECTOR3& end_pos, const int startTriIndex, const D3DXVECTOR3& start_pos, std::vector< D3DXVECTOR3> & pathList );
 
 };

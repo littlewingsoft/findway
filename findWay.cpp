@@ -58,7 +58,8 @@ namespace fw
 	{
 		testCode()
 		{
-			fw::NaviMesh_Load( "default.xml" );
+			fw::NaviMesh_Load( "tedefault.xml" );
+			//fw::NaviMesh_Load( "default.xml" );
 			fw::AddMesh_FromXml( "agent.xml" );
 			fw::AddMesh_FromXml( "point.xml" );
 			fw::AddMesh_FromXml( "Sphere01.xml" );
@@ -416,24 +417,25 @@ namespace fw
 		std::map<float,int> sortIndexmap; //key가 되는값으로 소팅되므로 가장 마지막것을 선택하면됨.
 		const fwNaviCell& currCell= kMesh.CellBuffer[ cellIndex ];
 
+
+
 		for( int indexCnt= 0; indexCnt<3; indexCnt++ )
 		{
 			int neighborIndex = currCell.NeighborTri[ indexCnt ];
+			if( neighborIndex == -1 )  // 이웃이 있어야함.
+				continue;
 
 			vector<int>::iterator it = find( closeList.begin(), closeList.end() , neighborIndex );
 
-			if( it != closeList.end() ) // 이미 처리한적 있는 애라면 건너뛰기.
+			if( it != closeList.end() ) // 한번도 순회한적 없어야함.
 				continue;
 
-			if( neighborIndex != -1 )// 이웃셀이 존재해야 하고 테스트해본셀이 아니어야 한다.
-			{
 				D3DXVECTOR3 delta = endPos - kMesh.CellBuffer[neighborIndex].center;   // currCell.center; //목표점은 시작위치다.
-				float heuristic = max( max( fabs(delta.x), fabs(delta.y) ), fabs(delta.z) );//fabs
+				float heuristic = max( max( (delta.x), (delta.y) ), (delta.z) );//fabs
 				float cost = currCell.arrivalCost[ indexCnt ];
 				float totalheuristic  = heuristic + cost;
 				sortIndexmap[ totalheuristic  ] = neighborIndex ;
 				closeList.push_back( neighborIndex );
-			}					
 		}
 
 		if( sortIndexmap.empty() == false )

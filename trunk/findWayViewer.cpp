@@ -464,11 +464,11 @@ HRESULT OnRenderPrimitive(IDirect3DDevice9* pd3dDevice, double fTime, float fEla
 	{
 		for( size_t n=0; n< pathList.size(); n++)
 		{
-			fw::GetMesh("agent").LocalMat._41 = pathList[n].x;
-			fw::GetMesh("agent").LocalMat._42 = pathList[n].y;
-			fw::GetMesh("agent").LocalMat._43 = pathList[n].z;
+			fw::GetMesh("point").LocalMat._41 = pathList[n].x;
+			fw::GetMesh("point").LocalMat._42 = pathList[n].y;
+			fw::GetMesh("point").LocalMat._43 = pathList[n].z;
 //			D3DXMatrixTranslation( &fw::GetMesh("agent").LocalMat,  pathList[n].x, pathList[n].y, pathList[n].z );
-			RenderMesh( pd3dDevice, fw::GetMesh("agent") );
+			RenderMesh( pd3dDevice, fw::GetMesh("point") );
 		}
 
 		RenderMesh( pd3dDevice, fw::GetMesh("point") );
@@ -478,15 +478,15 @@ HRESULT OnRenderPrimitive(IDirect3DDevice9* pd3dDevice, double fTime, float fEla
 		
 	}
 
-	pd3dDevice->SetRenderState(D3DRS_TEXTUREFACTOR, D3DCOLOR_ARGB(0x80, 0xff,0xff,0xff) ); 
-	pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, 1 );
-	pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_TFACTOR );
-	pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1 );
-/*	g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_TFACTOR);
-	g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);*/	
-
-	pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, 0 );
-	pd3dDevice->SetRenderState(D3DRS_TEXTUREFACTOR, 0xffffffff); 
+//	pd3dDevice->SetRenderState(D3DRS_TEXTUREFACTOR, D3DCOLOR_ARGB(0x80, 0xff,0xff,0xff) ); 
+//	pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, 1 );
+//	pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_TFACTOR );
+//	pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1 );
+///*	g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_TFACTOR);
+//	g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);*/	
+//
+//	pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, 0 );
+//	pd3dDevice->SetRenderState(D3DRS_TEXTUREFACTOR, 0xffffffff); 
 
 	DrawCellInfo();
 

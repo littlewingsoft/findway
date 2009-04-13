@@ -431,7 +431,7 @@ namespace fw
 				continue;
 
 				D3DXVECTOR3 delta = endPos - kMesh.CellBuffer[neighborIndex].center;   // currCell.center; //목표점은 시작위치다.
-				float heuristic = max( max( (delta.x), (delta.y) ), (delta.z) );//fabs
+				float heuristic = max( max( fabs(delta.x), fabs(delta.y) ), fabs(delta.z) );//
 				float cost = currCell.arrivalCost[ indexCnt ];
 				float totalheuristic  = heuristic + cost;
 				sortIndexmap[ totalheuristic  ] = neighborIndex ;
@@ -447,6 +447,78 @@ namespace fw
 		return - 1;
 	}
 
+
+struct node
+{
+	D3DXVECTOR3 pos;
+	float costFromStart;
+	float constToGoal;
+	node*	pkParent;
+};
+float PathCostEstimate( const D3DXVECTOR& start, const D3DXVECTOR3 goal )
+{
+	
+}
+
+	/**
+	*  A* algorithm 의 pseudo code
+Open: priorityqueue of searchnode
+
+Closed: list of searcnode
+
+ 
+
+AStarSearch (location StartLoc, location GoalLoc, agenttype Agent)
+
+        clear Open and Closed 
+
+        StartNode.Loc = StartLoc
+        StartNode.CostFromStart=0
+        StartNode.CostToGoal=PathCostEstimate( StartLoc, GoalLoc, Agent) // 그냥 최고값싼이동비용의 이웃을 찾자.
+        StartNode.Parent =null
+        push StartNode on Open
+
+        while Open is not empty
+
+                pop Node from Open
+
+                if (Node is a goal node)
+                {
+				   construct a path backward from Node to StartLoc 
+                   return success 경로.
+				}
+                else
+                        for each successor NewNode of Node
+                                NewCost = Node.CostFromStart + TraverseCost(Node, NewNode, Agent)
+
+                                if (NewNode is in Open or Closed) and
+                                        continue
+
+                                else  
+                                   NewNode.Parent=Node
+                                   NewNode.CostFromStart=NewCost
+                                   NewNode.CostToGoal=PathCostEstimate(NewNode.Loc,GoalLoc,Agent)
+							       NewNode.TotalCost=NewNode.CostFromStart+NewNode.CostToGoal
+
+                                        if (NewNode is in Closed)
+                                                remove NewNode from Closed
+
+                                        
+
+                                        if (NewNode is in Open)
+                                                adjust NewNode's location in Open
+                                        else
+                                                push NewNode onto Open
+					
+                  push Node onto Closed// 한번 검색한건 닫힌목록에 넣기.
+        
+
+        retrn failure
+
+[출처] A* algorithm 의 pseudo code|작성자 즐프
+
+
+	*/
 	// 이미 외부에서는 반직선 값만 넘겨주게 해야 될듯. 피킹으로 삼각형(셀) 인덱스를 찾아서 넘겨줬다. 
 	// 일단 pathList 는 최단거리 최적화는 하지않는다.
 	void FindWay( const int endCellIndex, const D3DXVECTOR3& end_pos, const int startCellIndex, const D3DXVECTOR3& start_pos, std::vector< D3DXVECTOR3> & pathList )
@@ -510,7 +582,8 @@ namespace fw
 						// 그리고 길찾기는 종료됨.
 						break;
 					}
-				}
+				}else
+					break;
 			}
 
 			// 보간될 길을 모두 찾았으면 end_pos 가 최종위치임.
@@ -518,6 +591,8 @@ namespace fw
 		}
 
 	}
+
+
 	// 시작위치와 끝위치를 넣으면 pathList 가 나온다.
 	// 만일 시간이오래 걸리면 비동기 처리를 해야 하려나.
 	// 일단은 매우 최대한 간단하고 simple 하게 유지함.

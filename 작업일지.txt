@@ -10,3 +10,98 @@
 5. Rendering 코드를 만들어 넣어서 비상업용 모듈로 공개할땐 강제로 화면에 워터마크 뜨게 하자.
 
 
+
+
+--------------------------------------------
+We begin the search by doing the following:
+
+1. Begin at the starting point A and add it to an “open list” of squares to be considered. 
+   시작점은 오픈리스트에 꼭 넣어야되.
+
+
+2. The open list is kind of like a shopping list. 
+   오픈리스트는 샤핑목록과 같아(탐색을순회할)
+   
+  Right now there is just one item on the list, but we will have more later. 
+  당장은 리스트에 달랑 하나밖에 없지만 우린 나중에 계속 채워넣게 될거야.
+  
+  It contains squares that might fall along the path you want to take, but maybe not. 
+  이것은 사각형을 
+  
+  Basically, this is a list of squares that need to be checked out.   
+  기본적으로 이것은 사각형목록이며 빠져나가길 원한다.
+  
+  Look at all the reachable or walkable squares adjacent to the starting point, ignoring squares with walls, water, or other illegal terrain. 
+  시작점으로부터 닿을수있거나 걸을수있는 모든 인접사각형을 조회하며 벽이나 물 불규칙한 지형은 무시한다.
+  
+  Add them to the open list, too. 
+  역시 오픈리스트에 몽땅 넣는다
+  
+  For each of these squares, save point A as its “parent square”. 
+  
+  사각형들 각각마다 A(시작점) 이 부모사각형으로 저장된다.
+  
+  This parent square stuff is important when we want to trace our path. 
+  부모사각형이란건 경로추적하는데 있어서 매우 중요하다.
+  
+  It will be explained more later.   
+  이건 나중에 설명할게
+  
+  Drop the starting square A from your open list, and add it to a “closed list” of squares that you don’t need to look at again for now. 
+  시작점을 오픈리스트에서 빼버리고 닫힌 목록에 넣어라, 더이상 조회할 일이 없다면 말이지 후후.
+  
+  
+  
+Path Scoring
+경로계산.
+
+The key to determining which squares to use when figuring out the path is the following equation:
+경로계산을 정하는 핵심은 다음 방정식과 같다.
+
+F = G + H  
+
+where 
+
+G = the movement cost to move from the starting point A to a given square on the grid, following the path generated to get there.  
+    시작점으로 부터 주어진 사각형으로의 이동값 
+H = the estimated movement cost to move from that given square on the grid to the final destination, point B. This is often referred to as the heuristic, which can be a bit confusing. 
+    최종목적지까지의 이동계산값.이값은 자주 제공된다 휴리스틱으로써 말이지. 작은 혼란이 있을수 있어 
+    
+    The reason why it is called that is because it is a guess. We really don’t know the actual distance until we find the path, because all sorts of things can be in the way (walls, water, etc.). 
+    왜냐면 이건 단지 추측이니깐 말야. 우린 정말 경로를 찾을때까지 얼마의 거리가 될지 알지못해 그래서 추측하는거야.  그래서 길이될만한건 몽땅다 정렬해( 벽,물,등등)
+    
+    You are given one way to calculate H in this tutorial, but there are many others that you can find in other articles on the web.     
+    이 튜토리얼에선 H를 계산하는 하나의 방법만 주어질거야. 그치만 웹상의 많은 아티클에선 많은 방법을 찾을수 있단다.(가중치계산하는방법말하는거야)
+    
+    
+Continuing the Search
+계속 서치하기
+
+To continue the search, we simply choose the lowest F score square from all those that are on the open list. 
+계속 서치하면 우린 단순히 선택할수있어 오픈리스트에 있는 낮은 최종합계를 가진 모든 사각형을 말야.
+
+We then do the following with the selected square: 
+우린 그러면 선택했던 사각형을 따라간다.(길찾기경로가 다 됐단 말야)
+
+4) Drop it from the open list and add it to the closed list. 
+   열린목록에서 모두 빼버리고 닫힌목록에 넣어.
+
+5) Check all of the adjacent squares. Ignoring those that are on the closed list or unwalkable (terrain with walls, water, or other illegal terrain), 
+   인접한 사각형을 모두 체크해. 다만 클로즈리스트에 있거나 갈수없는곳에 있는건 무시하고 말야. 
+   
+   add squares to the open list if they are not on the open list already. Make the selected square the “parent” of the new squares.    
+   가능성 있는 경로라면 열린목록에 추가해 만일 이미 열린목록에 없다면 말이지.그리고 이경로의 부모를 이전것으로 셋팅하고 말야.
+   
+   
+6) If an adjacent square is already on the open list, check to see if this path to that square is a better one. 
+    만일 인접한 경로가 이미 열린목록에 있으면 이 경로가 더 나은지(이동비용이더싼지) 한번더 체크해봐.
+
+   In other words, check to see if the G score for that square is lower if we use the current square to get there. If not, don’t do anything. 
+   바꿔말하면 현재이동경로의 G 값이 더 낮다면 내버려 둬
+   
+    On the other hand, if the G cost of the new path is lower, change the parent of the adjacent square to the selected square (in the diagram above, change the direction of the pointer to point at the selected square). 
+   반면에 새로운 경로의 G값이 더 낮다면 선택한 경로의 부모를 바꿔 인접한 놈으로.
+
+   Finally, recalculate both the F and G scores of that square. If this seems confusing, you will see it illustrated below. 
+   마침내 현재위치에서 F랑 G가 재계산 되었어. 만일 혼동된다면 아래 예시를 봐바.
+   

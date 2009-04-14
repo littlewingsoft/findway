@@ -1,0 +1,959 @@
+<?xml version="1.0" encoding="euc-kr"?>
+	<Body>
+		<Info>
+			<Filename>작업중.max</Filename>
+			<ObjectCount>3</ObjectCount>
+			<MeshCount>1</MeshCount>
+			<Object>
+				<Value ID="0">Camera01</Value>
+				<Value ID="1">Camera01.Target</Value>
+				<Value ID="2">navi_ground</Value>
+			</Object>
+		</Info>
+		<Object ID="0" Name="Camera01" Class="Targetcamera">
+			<LocalTM>
+				<Value>[0.996917,0.0,0.0784595,0.0]</Value>
+				<Value>[0.0319121,0.913547,-0.405481,0.0]</Value>
+				<Value>[-0.0716763,0.406734,0.910731,0.0]</Value>
+				<Value>[16.1837,207.828,-96.4387,1.0]</Value>
+			</LocalTM>
+			<FOV>[45.0]</FOV>
+			<NEAR>[1.0]</NEAR>
+			<FAR>[1000.0]</FAR>
+		</Object>
+		<Object ID="1" Name="Camera01.Target" Class="Targetobject">
+			<LocalTM>
+				<Value>[0.996917,0.0,0.0784592,0.0]</Value>
+				<Value>[0.0319122,0.913546,-0.405483,0.0]</Value>
+				<Value>[-0.0716759,0.406737,0.910729,0.0]</Value>
+				<Value>[12.4497,100.935,-48.9939,1.0]</Value>
+			</LocalTM>
+		</Object>
+		<Object ID="2" Name="navi_ground" Class="Editable_mesh">
+			<LocalTM>
+				<Value>[1.0,0.0,0.0,0.0]</Value>
+				<Value>[0.0,1.0,0.0,0.0]</Value>
+				<Value>[0.0,0.0,1.0,0.0]</Value>
+				<Value>[0.0,0.0,0.0,1.0]</Value>
+			</LocalTM>
+			<Vertex>
+				<Value Index="0">[-37.5,0,-50]</Value>
+				<Value Index="1">[-25,0,-50]</Value>
+				<Value Index="2">[-12.5,0,-50]</Value>
+				<Value Index="3">[0,0,-50]</Value>
+				<Value Index="4">[12.5,0,-50]</Value>
+				<Value Index="5">[25,0,-50]</Value>
+				<Value Index="6">[37.5,0,-50]</Value>
+				<Value Index="7">[50,0,-50]</Value>
+				<Value Index="8">[-50,0,-37.5]</Value>
+				<Value Index="9">[-37.5,0,-37.5]</Value>
+				<Value Index="10">[-25,0,-37.5]</Value>
+				<Value Index="11">[-12.5,0,-37.5]</Value>
+				<Value Index="12">[0,0,-37.5]</Value>
+				<Value Index="13">[12.5,0,-37.5]</Value>
+				<Value Index="14">[25,0,-37.5]</Value>
+				<Value Index="15">[37.5,0,-37.5]</Value>
+				<Value Index="16">[50,0,-37.5]</Value>
+				<Value Index="17">[-50,0,-25]</Value>
+				<Value Index="18">[-37.5,0,-25]</Value>
+				<Value Index="19">[-25,0,-25]</Value>
+				<Value Index="20">[-12.5,0,-25]</Value>
+				<Value Index="21">[0,0,-25]</Value>
+				<Value Index="22">[12.5,0,-25]</Value>
+				<Value Index="23">[25,0,-25]</Value>
+				<Value Index="24">[37.5,0,-25]</Value>
+				<Value Index="25">[50,0,-25]</Value>
+				<Value Index="26">[-50,0,-12.5]</Value>
+				<Value Index="27">[-37.5,0,-12.5]</Value>
+				<Value Index="28">[-25,0,-12.5]</Value>
+				<Value Index="29">[-12.5,0,-12.5]</Value>
+				<Value Index="30">[0,0,-12.5]</Value>
+				<Value Index="31">[12.5,0,-12.5]</Value>
+				<Value Index="32">[25,0,-12.5]</Value>
+				<Value Index="33">[37.5,0,-12.5]</Value>
+				<Value Index="34">[50,0,-12.5]</Value>
+				<Value Index="35">[-50,0,0]</Value>
+				<Value Index="36">[-37.5,0,0]</Value>
+				<Value Index="37">[-25,0,0]</Value>
+				<Value Index="38">[-12.5,0,0]</Value>
+				<Value Index="39">[0,0,0]</Value>
+				<Value Index="40">[12.5,0,0]</Value>
+				<Value Index="41">[25,0,0]</Value>
+				<Value Index="42">[37.5,0,0]</Value>
+				<Value Index="43">[50,0,0]</Value>
+				<Value Index="44">[-50,0,12.5]</Value>
+				<Value Index="45">[-37.5,0,12.5]</Value>
+				<Value Index="46">[-25,0,12.5]</Value>
+				<Value Index="47">[-12.5,0,12.5]</Value>
+				<Value Index="48">[0,0,12.5]</Value>
+				<Value Index="49">[12.5,0,12.5]</Value>
+				<Value Index="50">[25,0,12.5]</Value>
+				<Value Index="51">[37.5,0,12.5]</Value>
+				<Value Index="52">[50,0,12.5]</Value>
+				<Value Index="53">[-50,0,25]</Value>
+				<Value Index="54">[-37.5,0,25]</Value>
+				<Value Index="55">[-25,0,25]</Value>
+				<Value Index="56">[-12.5,0,25]</Value>
+				<Value Index="57">[0,0,25]</Value>
+				<Value Index="58">[12.5,0,25]</Value>
+				<Value Index="59">[25,0,25]</Value>
+				<Value Index="60">[37.5,0,25]</Value>
+				<Value Index="61">[50,0,25]</Value>
+				<Value Index="62">[-50,0,37.5]</Value>
+				<Value Index="63">[-37.5,0,37.5]</Value>
+				<Value Index="64">[-25,0,37.5]</Value>
+				<Value Index="65">[-12.5,0,37.5]</Value>
+				<Value Index="66">[0,0,37.5]</Value>
+				<Value Index="67">[12.5,0,37.5]</Value>
+				<Value Index="68">[25,0,37.5]</Value>
+				<Value Index="69">[37.5,0,37.5]</Value>
+				<Value Index="70">[50,0,37.5]</Value>
+				<Value Index="71">[-50,0,50]</Value>
+				<Value Index="72">[-37.5,0,50]</Value>
+				<Value Index="73">[-25,0,50]</Value>
+				<Value Index="74">[-12.5,0,50]</Value>
+				<Value Index="75">[0,0,50]</Value>
+				<Value Index="76">[12.5,0,50]</Value>
+				<Value Index="77">[25,0,50]</Value>
+				<Value Index="78">[37.5,0,50]</Value>
+				<Value Index="79">[50,0,50]</Value>
+			</Vertex>
+			<TriIndex>
+				<Value Index="0">[9,10,0]</Value>
+				<Value Index="1">[1,0,10]</Value>
+				<Value Index="2">[10,11,1]</Value>
+				<Value Index="3">[2,1,11]</Value>
+				<Value Index="4">[12,13,3]</Value>
+				<Value Index="5">[4,3,13]</Value>
+				<Value Index="6">[13,14,4]</Value>
+				<Value Index="7">[5,4,14]</Value>
+				<Value Index="8">[14,15,5]</Value>
+				<Value Index="9">[6,5,15]</Value>
+				<Value Index="10">[15,16,6]</Value>
+				<Value Index="11">[7,6,16]</Value>
+				<Value Index="12">[17,18,8]</Value>
+				<Value Index="13">[9,8,18]</Value>
+				<Value Index="14">[18,19,9]</Value>
+				<Value Index="15">[10,9,19]</Value>
+				<Value Index="16">[19,20,10]</Value>
+				<Value Index="17">[11,10,20]</Value>
+				<Value Index="18">[20,21,11]</Value>
+				<Value Index="19">[12,11,21]</Value>
+				<Value Index="20">[22,23,13]</Value>
+				<Value Index="21">[14,13,23]</Value>
+				<Value Index="22">[23,24,14]</Value>
+				<Value Index="23">[15,14,24]</Value>
+				<Value Index="24">[24,25,15]</Value>
+				<Value Index="25">[16,15,25]</Value>
+				<Value Index="26">[26,27,17]</Value>
+				<Value Index="27">[18,17,27]</Value>
+				<Value Index="28">[28,29,19]</Value>
+				<Value Index="29">[20,19,29]</Value>
+				<Value Index="30">[29,30,20]</Value>
+				<Value Index="31">[21,20,30]</Value>
+				<Value Index="32">[30,31,21]</Value>
+				<Value Index="33">[22,21,31]</Value>
+				<Value Index="34">[32,33,23]</Value>
+				<Value Index="35">[24,23,33]</Value>
+				<Value Index="36">[33,34,24]</Value>
+				<Value Index="37">[25,24,34]</Value>
+				<Value Index="38">[35,36,26]</Value>
+				<Value Index="39">[27,26,36]</Value>
+				<Value Index="40">[36,37,27]</Value>
+				<Value Index="41">[28,27,37]</Value>
+				<Value Index="42">[37,38,28]</Value>
+				<Value Index="43">[29,28,38]</Value>
+				<Value Index="44">[39,40,30]</Value>
+				<Value Index="45">[31,30,40]</Value>
+				<Value Index="46">[40,41,31]</Value>
+				<Value Index="47">[32,31,41]</Value>
+				<Value Index="48">[41,42,32]</Value>
+				<Value Index="49">[33,32,42]</Value>
+				<Value Index="50">[42,43,33]</Value>
+				<Value Index="51">[34,33,43]</Value>
+				<Value Index="52">[44,45,35]</Value>
+				<Value Index="53">[36,35,45]</Value>
+				<Value Index="54">[47,48,38]</Value>
+				<Value Index="55">[39,38,48]</Value>
+				<Value Index="56">[48,49,39]</Value>
+				<Value Index="57">[40,39,49]</Value>
+				<Value Index="58">[51,52,42]</Value>
+				<Value Index="59">[43,42,52]</Value>
+				<Value Index="60">[53,54,44]</Value>
+				<Value Index="61">[45,44,54]</Value>
+				<Value Index="62">[54,55,45]</Value>
+				<Value Index="63">[46,45,55]</Value>
+				<Value Index="64">[55,56,46]</Value>
+				<Value Index="65">[47,46,56]</Value>
+				<Value Index="66">[56,57,47]</Value>
+				<Value Index="67">[48,47,57]</Value>
+				<Value Index="68">[57,58,48]</Value>
+				<Value Index="69">[49,48,58]</Value>
+				<Value Index="70">[59,60,50]</Value>
+				<Value Index="71">[51,50,60]</Value>
+				<Value Index="72">[60,61,51]</Value>
+				<Value Index="73">[52,51,61]</Value>
+				<Value Index="74">[62,63,53]</Value>
+				<Value Index="75">[54,53,63]</Value>
+				<Value Index="76">[63,64,54]</Value>
+				<Value Index="77">[55,54,64]</Value>
+				<Value Index="78">[64,65,55]</Value>
+				<Value Index="79">[56,55,65]</Value>
+				<Value Index="80">[66,67,57]</Value>
+				<Value Index="81">[58,57,67]</Value>
+				<Value Index="82">[67,68,58]</Value>
+				<Value Index="83">[59,58,68]</Value>
+				<Value Index="84">[68,69,59]</Value>
+				<Value Index="85">[60,59,69]</Value>
+				<Value Index="86">[69,70,60]</Value>
+				<Value Index="87">[61,60,70]</Value>
+				<Value Index="88">[71,72,62]</Value>
+				<Value Index="89">[63,62,72]</Value>
+				<Value Index="90">[72,73,63]</Value>
+				<Value Index="91">[64,63,73]</Value>
+				<Value Index="92">[73,74,64]</Value>
+				<Value Index="93">[65,64,74]</Value>
+				<Value Index="94">[74,75,65]</Value>
+				<Value Index="95">[66,65,75]</Value>
+				<Value Index="96">[75,76,66]</Value>
+				<Value Index="97">[67,66,76]</Value>
+				<Value Index="98">[76,77,67]</Value>
+				<Value Index="99">[68,67,77]</Value>
+				<Value Index="100">[77,78,68]</Value>
+				<Value Index="101">[69,68,78]</Value>
+				<Value Index="102">[78,79,69]</Value>
+				<Value Index="103">[70,69,79]</Value>
+			</TriIndex>
+			<NaviCell>
+				<Value TriIndex="0" Center="[-33.3333,0,-41.6667]" Neighbor="(EdgeIndex XY:-1 YZ:1 ZX:15)">
+					<EdgeCenter>
+						<AB>[-31.25,0,-37.5] ( 4.65848 ) </AB>
+						<BC>[-31.25,0,-43.75] ( 2.94628 ) </BC>
+						<CA>[-37.5,0,-43.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="1" Center="[-29.1667,0,-45.8333]" Neighbor="(EdgeIndex XY:2 YZ:0 ZX:-1)">
+					<EdgeCenter>
+						<AB>[-31.25,0,-50] ( 4.65847 ) </AB>
+						<BC>[-31.25,0,-43.75] ( 2.94628 ) </BC>
+						<CA>[-25,0,-43.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="2" Center="[-20.8333,0,-41.6667]" Neighbor="(EdgeIndex XY:1 YZ:3 ZX:17)">
+					<EdgeCenter>
+						<AB>[-18.75,0,-37.5] ( 4.65848 ) </AB>
+						<BC>[-18.75,0,-43.75] ( 2.94628 ) </BC>
+						<CA>[-25,0,-43.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="3" Center="[-16.6667,0,-45.8333]" Neighbor="(EdgeIndex XY:-1 YZ:2 ZX:-1)">
+					<EdgeCenter>
+						<AB>[-18.75,0,-50] ( 4.65847 ) </AB>
+						<BC>[-18.75,0,-43.75] ( 2.94628 ) </BC>
+						<CA>[-12.5,0,-43.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="4" Center="[4.16667,0,-41.6667]" Neighbor="(EdgeIndex XY:-1 YZ:5 ZX:-1)">
+					<EdgeCenter>
+						<AB>[6.25,0,-37.5] ( 4.65848 ) </AB>
+						<BC>[6.25,0,-43.75] ( 2.94628 ) </BC>
+						<CA>[0,0,-43.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="5" Center="[8.33333,0,-45.8333]" Neighbor="(EdgeIndex XY:6 YZ:4 ZX:-1)">
+					<EdgeCenter>
+						<AB>[6.25,0,-50] ( 4.65847 ) </AB>
+						<BC>[6.25,0,-43.75] ( 2.94628 ) </BC>
+						<CA>[12.5,0,-43.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="6" Center="[16.6667,0,-41.6667]" Neighbor="(EdgeIndex XY:5 YZ:7 ZX:21)">
+					<EdgeCenter>
+						<AB>[18.75,0,-37.5] ( 4.65848 ) </AB>
+						<BC>[18.75,0,-43.75] ( 2.94628 ) </BC>
+						<CA>[12.5,0,-43.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="7" Center="[20.8333,0,-45.8333]" Neighbor="(EdgeIndex XY:8 YZ:6 ZX:-1)">
+					<EdgeCenter>
+						<AB>[18.75,0,-50] ( 4.65847 ) </AB>
+						<BC>[18.75,0,-43.75] ( 2.94628 ) </BC>
+						<CA>[25,0,-43.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="8" Center="[29.1667,0,-41.6667]" Neighbor="(EdgeIndex XY:7 YZ:9 ZX:23)">
+					<EdgeCenter>
+						<AB>[31.25,0,-37.5] ( 4.65848 ) </AB>
+						<BC>[31.25,0,-43.75] ( 2.94628 ) </BC>
+						<CA>[25,0,-43.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="9" Center="[33.3333,0,-45.8333]" Neighbor="(EdgeIndex XY:10 YZ:8 ZX:-1)">
+					<EdgeCenter>
+						<AB>[31.25,0,-50] ( 4.65847 ) </AB>
+						<BC>[31.25,0,-43.75] ( 2.94628 ) </BC>
+						<CA>[37.5,0,-43.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="10" Center="[41.6667,0,-41.6667]" Neighbor="(EdgeIndex XY:9 YZ:11 ZX:25)">
+					<EdgeCenter>
+						<AB>[43.75,0,-37.5] ( 4.65848 ) </AB>
+						<BC>[43.75,0,-43.75] ( 2.94628 ) </BC>
+						<CA>[37.5,0,-43.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="11" Center="[45.8333,0,-45.8333]" Neighbor="(EdgeIndex XY:-1 YZ:10 ZX:-1)">
+					<EdgeCenter>
+						<AB>[43.75,0,-50] ( 4.65847 ) </AB>
+						<BC>[43.75,0,-43.75] ( 2.94628 ) </BC>
+						<CA>[50,0,-43.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="12" Center="[-45.8333,0,-29.1667]" Neighbor="(EdgeIndex XY:-1 YZ:13 ZX:27)">
+					<EdgeCenter>
+						<AB>[-43.75,0,-25] ( 4.65848 ) </AB>
+						<BC>[-43.75,0,-31.25] ( 2.94628 ) </BC>
+						<CA>[-50,0,-31.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="13" Center="[-41.6667,0,-33.3333]" Neighbor="(EdgeIndex XY:14 YZ:12 ZX:-1)">
+					<EdgeCenter>
+						<AB>[-43.75,0,-37.5] ( 4.65847 ) </AB>
+						<BC>[-43.75,0,-31.25] ( 2.94628 ) </BC>
+						<CA>[-37.5,0,-31.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="14" Center="[-33.3333,0,-29.1667]" Neighbor="(EdgeIndex XY:13 YZ:15 ZX:-1)">
+					<EdgeCenter>
+						<AB>[-31.25,0,-25] ( 4.65848 ) </AB>
+						<BC>[-31.25,0,-31.25] ( 2.94628 ) </BC>
+						<CA>[-37.5,0,-31.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="15" Center="[-29.1667,0,-33.3333]" Neighbor="(EdgeIndex XY:16 YZ:14 ZX:0)">
+					<EdgeCenter>
+						<AB>[-31.25,0,-37.5] ( 4.65847 ) </AB>
+						<BC>[-31.25,0,-31.25] ( 2.94628 ) </BC>
+						<CA>[-25,0,-31.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="16" Center="[-20.8333,0,-29.1667]" Neighbor="(EdgeIndex XY:15 YZ:17 ZX:29)">
+					<EdgeCenter>
+						<AB>[-18.75,0,-25] ( 4.65848 ) </AB>
+						<BC>[-18.75,0,-31.25] ( 2.94628 ) </BC>
+						<CA>[-25,0,-31.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="17" Center="[-16.6667,0,-33.3333]" Neighbor="(EdgeIndex XY:18 YZ:16 ZX:2)">
+					<EdgeCenter>
+						<AB>[-18.75,0,-37.5] ( 4.65847 ) </AB>
+						<BC>[-18.75,0,-31.25] ( 2.94628 ) </BC>
+						<CA>[-12.5,0,-31.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="18" Center="[-8.33333,0,-29.1667]" Neighbor="(EdgeIndex XY:17 YZ:19 ZX:31)">
+					<EdgeCenter>
+						<AB>[-6.25,0,-25] ( 4.65848 ) </AB>
+						<BC>[-6.25,0,-31.25] ( 2.94628 ) </BC>
+						<CA>[-12.5,0,-31.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="19" Center="[-4.16667,0,-33.3333]" Neighbor="(EdgeIndex XY:-1 YZ:18 ZX:-1)">
+					<EdgeCenter>
+						<AB>[-6.25,0,-37.5] ( 4.65847 ) </AB>
+						<BC>[-6.25,0,-31.25] ( 2.94628 ) </BC>
+						<CA>[0,0,-31.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="20" Center="[16.6667,0,-29.1667]" Neighbor="(EdgeIndex XY:-1 YZ:21 ZX:-1)">
+					<EdgeCenter>
+						<AB>[18.75,0,-25] ( 4.65848 ) </AB>
+						<BC>[18.75,0,-31.25] ( 2.94628 ) </BC>
+						<CA>[12.5,0,-31.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="21" Center="[20.8333,0,-33.3333]" Neighbor="(EdgeIndex XY:22 YZ:20 ZX:6)">
+					<EdgeCenter>
+						<AB>[18.75,0,-37.5] ( 4.65847 ) </AB>
+						<BC>[18.75,0,-31.25] ( 2.94628 ) </BC>
+						<CA>[25,0,-31.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="22" Center="[29.1667,0,-29.1667]" Neighbor="(EdgeIndex XY:21 YZ:23 ZX:35)">
+					<EdgeCenter>
+						<AB>[31.25,0,-25] ( 4.65848 ) </AB>
+						<BC>[31.25,0,-31.25] ( 2.94628 ) </BC>
+						<CA>[25,0,-31.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="23" Center="[33.3333,0,-33.3333]" Neighbor="(EdgeIndex XY:24 YZ:22 ZX:8)">
+					<EdgeCenter>
+						<AB>[31.25,0,-37.5] ( 4.65847 ) </AB>
+						<BC>[31.25,0,-31.25] ( 2.94628 ) </BC>
+						<CA>[37.5,0,-31.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="24" Center="[41.6667,0,-29.1667]" Neighbor="(EdgeIndex XY:23 YZ:25 ZX:37)">
+					<EdgeCenter>
+						<AB>[43.75,0,-25] ( 4.65848 ) </AB>
+						<BC>[43.75,0,-31.25] ( 2.94628 ) </BC>
+						<CA>[37.5,0,-31.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="25" Center="[45.8333,0,-33.3333]" Neighbor="(EdgeIndex XY:-1 YZ:24 ZX:10)">
+					<EdgeCenter>
+						<AB>[43.75,0,-37.5] ( 4.65847 ) </AB>
+						<BC>[43.75,0,-31.25] ( 2.94628 ) </BC>
+						<CA>[50,0,-31.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="26" Center="[-45.8333,0,-16.6667]" Neighbor="(EdgeIndex XY:-1 YZ:27 ZX:39)">
+					<EdgeCenter>
+						<AB>[-43.75,0,-12.5] ( 4.65848 ) </AB>
+						<BC>[-43.75,0,-18.75] ( 2.94628 ) </BC>
+						<CA>[-50,0,-18.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="27" Center="[-41.6667,0,-20.8333]" Neighbor="(EdgeIndex XY:-1 YZ:26 ZX:12)">
+					<EdgeCenter>
+						<AB>[-43.75,0,-25] ( 4.65847 ) </AB>
+						<BC>[-43.75,0,-18.75] ( 2.94628 ) </BC>
+						<CA>[-37.5,0,-18.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="28" Center="[-20.8333,0,-16.6667]" Neighbor="(EdgeIndex XY:-1 YZ:29 ZX:43)">
+					<EdgeCenter>
+						<AB>[-18.75,0,-12.5] ( 4.65848 ) </AB>
+						<BC>[-18.75,0,-18.75] ( 2.94628 ) </BC>
+						<CA>[-25,0,-18.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="29" Center="[-16.6667,0,-20.8333]" Neighbor="(EdgeIndex XY:30 YZ:28 ZX:16)">
+					<EdgeCenter>
+						<AB>[-18.75,0,-25] ( 4.65847 ) </AB>
+						<BC>[-18.75,0,-18.75] ( 2.94628 ) </BC>
+						<CA>[-12.5,0,-18.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="30" Center="[-8.33333,0,-16.6667]" Neighbor="(EdgeIndex XY:29 YZ:31 ZX:-1)">
+					<EdgeCenter>
+						<AB>[-6.25,0,-12.5] ( 4.65848 ) </AB>
+						<BC>[-6.25,0,-18.75] ( 2.94628 ) </BC>
+						<CA>[-12.5,0,-18.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="31" Center="[-4.16667,0,-20.8333]" Neighbor="(EdgeIndex XY:32 YZ:30 ZX:18)">
+					<EdgeCenter>
+						<AB>[-6.25,0,-25] ( 4.65847 ) </AB>
+						<BC>[-6.25,0,-18.75] ( 2.94628 ) </BC>
+						<CA>[0,0,-18.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="32" Center="[4.16667,0,-16.6667]" Neighbor="(EdgeIndex XY:31 YZ:33 ZX:45)">
+					<EdgeCenter>
+						<AB>[6.25,0,-12.5] ( 4.65848 ) </AB>
+						<BC>[6.25,0,-18.75] ( 2.94628 ) </BC>
+						<CA>[0,0,-18.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="33" Center="[8.33333,0,-20.8333]" Neighbor="(EdgeIndex XY:-1 YZ:32 ZX:-1)">
+					<EdgeCenter>
+						<AB>[6.25,0,-25] ( 4.65847 ) </AB>
+						<BC>[6.25,0,-18.75] ( 2.94628 ) </BC>
+						<CA>[12.5,0,-18.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="34" Center="[29.1667,0,-16.6667]" Neighbor="(EdgeIndex XY:-1 YZ:35 ZX:49)">
+					<EdgeCenter>
+						<AB>[31.25,0,-12.5] ( 4.65848 ) </AB>
+						<BC>[31.25,0,-18.75] ( 2.94628 ) </BC>
+						<CA>[25,0,-18.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="35" Center="[33.3333,0,-20.8333]" Neighbor="(EdgeIndex XY:36 YZ:34 ZX:22)">
+					<EdgeCenter>
+						<AB>[31.25,0,-25] ( 4.65848 ) </AB>
+						<BC>[31.25,0,-18.75] ( 2.94628 ) </BC>
+						<CA>[37.5,0,-18.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="36" Center="[41.6667,0,-16.6667]" Neighbor="(EdgeIndex XY:35 YZ:37 ZX:51)">
+					<EdgeCenter>
+						<AB>[43.75,0,-12.5] ( 4.65848 ) </AB>
+						<BC>[43.75,0,-18.75] ( 2.94628 ) </BC>
+						<CA>[37.5,0,-18.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="37" Center="[45.8333,0,-20.8333]" Neighbor="(EdgeIndex XY:-1 YZ:36 ZX:24)">
+					<EdgeCenter>
+						<AB>[43.75,0,-25] ( 4.65848 ) </AB>
+						<BC>[43.75,0,-18.75] ( 2.94628 ) </BC>
+						<CA>[50,0,-18.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="38" Center="[-45.8333,0,-4.16667]" Neighbor="(EdgeIndex XY:-1 YZ:39 ZX:53)">
+					<EdgeCenter>
+						<AB>[-43.75,0,0] ( 4.65848 ) </AB>
+						<BC>[-43.75,0,-6.25] ( 2.94628 ) </BC>
+						<CA>[-50,0,-6.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="39" Center="[-41.6667,0,-8.33333]" Neighbor="(EdgeIndex XY:40 YZ:38 ZX:26)">
+					<EdgeCenter>
+						<AB>[-43.75,0,-12.5] ( 4.65847 ) </AB>
+						<BC>[-43.75,0,-6.25] ( 2.94628 ) </BC>
+						<CA>[-37.5,0,-6.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="40" Center="[-33.3333,0,-4.16667]" Neighbor="(EdgeIndex XY:39 YZ:41 ZX:-1)">
+					<EdgeCenter>
+						<AB>[-31.25,0,0] ( 4.65848 ) </AB>
+						<BC>[-31.25,0,-6.25] ( 2.94628 ) </BC>
+						<CA>[-37.5,0,-6.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="41" Center="[-29.1667,0,-8.33333]" Neighbor="(EdgeIndex XY:42 YZ:40 ZX:-1)">
+					<EdgeCenter>
+						<AB>[-31.25,0,-12.5] ( 4.65847 ) </AB>
+						<BC>[-31.25,0,-6.25] ( 2.94628 ) </BC>
+						<CA>[-25,0,-6.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="42" Center="[-20.8333,0,-4.16667]" Neighbor="(EdgeIndex XY:41 YZ:43 ZX:-1)">
+					<EdgeCenter>
+						<AB>[-18.75,0,0] ( 4.65848 ) </AB>
+						<BC>[-18.75,0,-6.25] ( 2.94628 ) </BC>
+						<CA>[-25,0,-6.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="43" Center="[-16.6667,0,-8.33333]" Neighbor="(EdgeIndex XY:-1 YZ:42 ZX:28)">
+					<EdgeCenter>
+						<AB>[-18.75,0,-12.5] ( 4.65847 ) </AB>
+						<BC>[-18.75,0,-6.25] ( 2.94628 ) </BC>
+						<CA>[-12.5,0,-6.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="44" Center="[4.16667,0,-4.16667]" Neighbor="(EdgeIndex XY:-1 YZ:45 ZX:57)">
+					<EdgeCenter>
+						<AB>[6.25,0,0] ( 4.65847 ) </AB>
+						<BC>[6.25,0,-6.25] ( 2.94628 ) </BC>
+						<CA>[0,0,-6.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="45" Center="[8.33333,0,-8.33333]" Neighbor="(EdgeIndex XY:46 YZ:44 ZX:32)">
+					<EdgeCenter>
+						<AB>[6.25,0,-12.5] ( 4.65847 ) </AB>
+						<BC>[6.25,0,-6.25] ( 2.94628 ) </BC>
+						<CA>[12.5,0,-6.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="46" Center="[16.6667,0,-4.16667]" Neighbor="(EdgeIndex XY:45 YZ:47 ZX:-1)">
+					<EdgeCenter>
+						<AB>[18.75,0,0] ( 4.65847 ) </AB>
+						<BC>[18.75,0,-6.25] ( 2.94628 ) </BC>
+						<CA>[12.5,0,-6.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="47" Center="[20.8333,0,-8.33333]" Neighbor="(EdgeIndex XY:48 YZ:46 ZX:-1)">
+					<EdgeCenter>
+						<AB>[18.75,0,-12.5] ( 4.65847 ) </AB>
+						<BC>[18.75,0,-6.25] ( 2.94628 ) </BC>
+						<CA>[25,0,-6.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="48" Center="[29.1667,0,-4.16667]" Neighbor="(EdgeIndex XY:47 YZ:49 ZX:-1)">
+					<EdgeCenter>
+						<AB>[31.25,0,0] ( 4.65847 ) </AB>
+						<BC>[31.25,0,-6.25] ( 2.94628 ) </BC>
+						<CA>[25,0,-6.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="49" Center="[33.3333,0,-8.33333]" Neighbor="(EdgeIndex XY:50 YZ:48 ZX:34)">
+					<EdgeCenter>
+						<AB>[31.25,0,-12.5] ( 4.65848 ) </AB>
+						<BC>[31.25,0,-6.25] ( 2.94628 ) </BC>
+						<CA>[37.5,0,-6.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="50" Center="[41.6667,0,-4.16667]" Neighbor="(EdgeIndex XY:49 YZ:51 ZX:59)">
+					<EdgeCenter>
+						<AB>[43.75,0,0] ( 4.65847 ) </AB>
+						<BC>[43.75,0,-6.25] ( 2.94628 ) </BC>
+						<CA>[37.5,0,-6.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="51" Center="[45.8333,0,-8.33333]" Neighbor="(EdgeIndex XY:-1 YZ:50 ZX:36)">
+					<EdgeCenter>
+						<AB>[43.75,0,-12.5] ( 4.65848 ) </AB>
+						<BC>[43.75,0,-6.25] ( 2.94628 ) </BC>
+						<CA>[50,0,-6.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="52" Center="[-45.8333,0,8.33333]" Neighbor="(EdgeIndex XY:-1 YZ:53 ZX:61)">
+					<EdgeCenter>
+						<AB>[-43.75,0,12.5] ( 4.65848 ) </AB>
+						<BC>[-43.75,0,6.25] ( 2.94628 ) </BC>
+						<CA>[-50,0,6.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="53" Center="[-41.6667,0,4.16667]" Neighbor="(EdgeIndex XY:-1 YZ:52 ZX:38)">
+					<EdgeCenter>
+						<AB>[-43.75,0,0] ( 4.65847 ) </AB>
+						<BC>[-43.75,0,6.25] ( 2.94628 ) </BC>
+						<CA>[-37.5,0,6.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="54" Center="[-8.33333,0,8.33333]" Neighbor="(EdgeIndex XY:-1 YZ:55 ZX:67)">
+					<EdgeCenter>
+						<AB>[-6.25,0,12.5] ( 4.65847 ) </AB>
+						<BC>[-6.25,0,6.25] ( 2.94628 ) </BC>
+						<CA>[-12.5,0,6.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="55" Center="[-4.16667,0,4.16667]" Neighbor="(EdgeIndex XY:56 YZ:54 ZX:-1)">
+					<EdgeCenter>
+						<AB>[-6.25,0,0] ( 4.65847 ) </AB>
+						<BC>[-6.25,0,6.25] ( 2.94628 ) </BC>
+						<CA>[0,0,6.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="56" Center="[4.16667,0,8.33333]" Neighbor="(EdgeIndex XY:55 YZ:57 ZX:69)">
+					<EdgeCenter>
+						<AB>[6.25,0,12.5] ( 4.65847 ) </AB>
+						<BC>[6.25,0,6.25] ( 2.94628 ) </BC>
+						<CA>[0,0,6.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="57" Center="[8.33333,0,4.16667]" Neighbor="(EdgeIndex XY:-1 YZ:56 ZX:44)">
+					<EdgeCenter>
+						<AB>[6.25,0,0] ( 4.65848 ) </AB>
+						<BC>[6.25,0,6.25] ( 2.94628 ) </BC>
+						<CA>[12.5,0,6.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="58" Center="[41.6667,0,8.33333]" Neighbor="(EdgeIndex XY:-1 YZ:59 ZX:73)">
+					<EdgeCenter>
+						<AB>[43.75,0,12.5] ( 4.65847 ) </AB>
+						<BC>[43.75,0,6.25] ( 2.94628 ) </BC>
+						<CA>[37.5,0,6.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="59" Center="[45.8333,0,4.16667]" Neighbor="(EdgeIndex XY:-1 YZ:58 ZX:50)">
+					<EdgeCenter>
+						<AB>[43.75,0,0] ( 4.65848 ) </AB>
+						<BC>[43.75,0,6.25] ( 2.94628 ) </BC>
+						<CA>[50,0,6.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="60" Center="[-45.8333,0,20.8333]" Neighbor="(EdgeIndex XY:-1 YZ:61 ZX:75)">
+					<EdgeCenter>
+						<AB>[-43.75,0,25] ( 4.65848 ) </AB>
+						<BC>[-43.75,0,18.75] ( 2.94628 ) </BC>
+						<CA>[-50,0,18.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="61" Center="[-41.6667,0,16.6667]" Neighbor="(EdgeIndex XY:62 YZ:60 ZX:52)">
+					<EdgeCenter>
+						<AB>[-43.75,0,12.5] ( 4.65848 ) </AB>
+						<BC>[-43.75,0,18.75] ( 2.94628 ) </BC>
+						<CA>[-37.5,0,18.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="62" Center="[-33.3333,0,20.8333]" Neighbor="(EdgeIndex XY:61 YZ:63 ZX:77)">
+					<EdgeCenter>
+						<AB>[-31.25,0,25] ( 4.65848 ) </AB>
+						<BC>[-31.25,0,18.75] ( 2.94628 ) </BC>
+						<CA>[-37.5,0,18.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="63" Center="[-29.1667,0,16.6667]" Neighbor="(EdgeIndex XY:64 YZ:62 ZX:-1)">
+					<EdgeCenter>
+						<AB>[-31.25,0,12.5] ( 4.65848 ) </AB>
+						<BC>[-31.25,0,18.75] ( 2.94628 ) </BC>
+						<CA>[-25,0,18.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="64" Center="[-20.8333,0,20.8333]" Neighbor="(EdgeIndex XY:63 YZ:65 ZX:79)">
+					<EdgeCenter>
+						<AB>[-18.75,0,25] ( 4.65847 ) </AB>
+						<BC>[-18.75,0,18.75] ( 2.94628 ) </BC>
+						<CA>[-25,0,18.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="65" Center="[-16.6667,0,16.6667]" Neighbor="(EdgeIndex XY:66 YZ:64 ZX:-1)">
+					<EdgeCenter>
+						<AB>[-18.75,0,12.5] ( 4.65848 ) </AB>
+						<BC>[-18.75,0,18.75] ( 2.94628 ) </BC>
+						<CA>[-12.5,0,18.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="66" Center="[-8.33333,0,20.8333]" Neighbor="(EdgeIndex XY:65 YZ:67 ZX:-1)">
+					<EdgeCenter>
+						<AB>[-6.25,0,25] ( 4.65847 ) </AB>
+						<BC>[-6.25,0,18.75] ( 2.94628 ) </BC>
+						<CA>[-12.5,0,18.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="67" Center="[-4.16667,0,16.6667]" Neighbor="(EdgeIndex XY:68 YZ:66 ZX:54)">
+					<EdgeCenter>
+						<AB>[-6.25,0,12.5] ( 4.65848 ) </AB>
+						<BC>[-6.25,0,18.75] ( 2.94628 ) </BC>
+						<CA>[0,0,18.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="68" Center="[4.16667,0,20.8333]" Neighbor="(EdgeIndex XY:67 YZ:69 ZX:81)">
+					<EdgeCenter>
+						<AB>[6.25,0,25] ( 4.65847 ) </AB>
+						<BC>[6.25,0,18.75] ( 2.94628 ) </BC>
+						<CA>[0,0,18.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="69" Center="[8.33333,0,16.6667]" Neighbor="(EdgeIndex XY:-1 YZ:68 ZX:56)">
+					<EdgeCenter>
+						<AB>[6.25,0,12.5] ( 4.65848 ) </AB>
+						<BC>[6.25,0,18.75] ( 2.94628 ) </BC>
+						<CA>[12.5,0,18.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="70" Center="[29.1667,0,20.8333]" Neighbor="(EdgeIndex XY:-1 YZ:71 ZX:85)">
+					<EdgeCenter>
+						<AB>[31.25,0,25] ( 4.65847 ) </AB>
+						<BC>[31.25,0,18.75] ( 2.94628 ) </BC>
+						<CA>[25,0,18.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="71" Center="[33.3333,0,16.6667]" Neighbor="(EdgeIndex XY:72 YZ:70 ZX:-1)">
+					<EdgeCenter>
+						<AB>[31.25,0,12.5] ( 4.65848 ) </AB>
+						<BC>[31.25,0,18.75] ( 2.94628 ) </BC>
+						<CA>[37.5,0,18.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="72" Center="[41.6667,0,20.8333]" Neighbor="(EdgeIndex XY:71 YZ:73 ZX:87)">
+					<EdgeCenter>
+						<AB>[43.75,0,25] ( 4.65847 ) </AB>
+						<BC>[43.75,0,18.75] ( 2.94628 ) </BC>
+						<CA>[37.5,0,18.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="73" Center="[45.8333,0,16.6667]" Neighbor="(EdgeIndex XY:-1 YZ:72 ZX:58)">
+					<EdgeCenter>
+						<AB>[43.75,0,12.5] ( 4.65848 ) </AB>
+						<BC>[43.75,0,18.75] ( 2.94628 ) </BC>
+						<CA>[50,0,18.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="74" Center="[-45.8333,0,33.3333]" Neighbor="(EdgeIndex XY:-1 YZ:75 ZX:89)">
+					<EdgeCenter>
+						<AB>[-43.75,0,37.5] ( 4.65847 ) </AB>
+						<BC>[-43.75,0,31.25] ( 2.94628 ) </BC>
+						<CA>[-50,0,31.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="75" Center="[-41.6667,0,29.1667]" Neighbor="(EdgeIndex XY:76 YZ:74 ZX:60)">
+					<EdgeCenter>
+						<AB>[-43.75,0,25] ( 4.65848 ) </AB>
+						<BC>[-43.75,0,31.25] ( 2.94628 ) </BC>
+						<CA>[-37.5,0,31.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="76" Center="[-33.3333,0,33.3333]" Neighbor="(EdgeIndex XY:75 YZ:77 ZX:91)">
+					<EdgeCenter>
+						<AB>[-31.25,0,37.5] ( 4.65847 ) </AB>
+						<BC>[-31.25,0,31.25] ( 2.94628 ) </BC>
+						<CA>[-37.5,0,31.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="77" Center="[-29.1667,0,29.1667]" Neighbor="(EdgeIndex XY:78 YZ:76 ZX:62)">
+					<EdgeCenter>
+						<AB>[-31.25,0,25] ( 4.65848 ) </AB>
+						<BC>[-31.25,0,31.25] ( 2.94628 ) </BC>
+						<CA>[-25,0,31.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="78" Center="[-20.8333,0,33.3333]" Neighbor="(EdgeIndex XY:77 YZ:79 ZX:93)">
+					<EdgeCenter>
+						<AB>[-18.75,0,37.5] ( 4.65847 ) </AB>
+						<BC>[-18.75,0,31.25] ( 2.94628 ) </BC>
+						<CA>[-25,0,31.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="79" Center="[-16.6667,0,29.1667]" Neighbor="(EdgeIndex XY:-1 YZ:78 ZX:64)">
+					<EdgeCenter>
+						<AB>[-18.75,0,25] ( 4.65848 ) </AB>
+						<BC>[-18.75,0,31.25] ( 2.94628 ) </BC>
+						<CA>[-12.5,0,31.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="80" Center="[4.16667,0,33.3333]" Neighbor="(EdgeIndex XY:-1 YZ:81 ZX:97)">
+					<EdgeCenter>
+						<AB>[6.25,0,37.5] ( 4.65847 ) </AB>
+						<BC>[6.25,0,31.25] ( 2.94628 ) </BC>
+						<CA>[0,0,31.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="81" Center="[8.33333,0,29.1667]" Neighbor="(EdgeIndex XY:82 YZ:80 ZX:68)">
+					<EdgeCenter>
+						<AB>[6.25,0,25] ( 4.65848 ) </AB>
+						<BC>[6.25,0,31.25] ( 2.94628 ) </BC>
+						<CA>[12.5,0,31.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="82" Center="[16.6667,0,33.3333]" Neighbor="(EdgeIndex XY:81 YZ:83 ZX:99)">
+					<EdgeCenter>
+						<AB>[18.75,0,37.5] ( 4.65847 ) </AB>
+						<BC>[18.75,0,31.25] ( 2.94628 ) </BC>
+						<CA>[12.5,0,31.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="83" Center="[20.8333,0,29.1667]" Neighbor="(EdgeIndex XY:84 YZ:82 ZX:-1)">
+					<EdgeCenter>
+						<AB>[18.75,0,25] ( 4.65848 ) </AB>
+						<BC>[18.75,0,31.25] ( 2.94628 ) </BC>
+						<CA>[25,0,31.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="84" Center="[29.1667,0,33.3333]" Neighbor="(EdgeIndex XY:83 YZ:85 ZX:101)">
+					<EdgeCenter>
+						<AB>[31.25,0,37.5] ( 4.65847 ) </AB>
+						<BC>[31.25,0,31.25] ( 2.94628 ) </BC>
+						<CA>[25,0,31.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="85" Center="[33.3333,0,29.1667]" Neighbor="(EdgeIndex XY:86 YZ:84 ZX:70)">
+					<EdgeCenter>
+						<AB>[31.25,0,25] ( 4.65848 ) </AB>
+						<BC>[31.25,0,31.25] ( 2.94628 ) </BC>
+						<CA>[37.5,0,31.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="86" Center="[41.6667,0,33.3333]" Neighbor="(EdgeIndex XY:85 YZ:87 ZX:103)">
+					<EdgeCenter>
+						<AB>[43.75,0,37.5] ( 4.65847 ) </AB>
+						<BC>[43.75,0,31.25] ( 2.94628 ) </BC>
+						<CA>[37.5,0,31.25] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="87" Center="[45.8333,0,29.1667]" Neighbor="(EdgeIndex XY:-1 YZ:86 ZX:72)">
+					<EdgeCenter>
+						<AB>[43.75,0,25] ( 4.65848 ) </AB>
+						<BC>[43.75,0,31.25] ( 2.94628 ) </BC>
+						<CA>[50,0,31.25] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="88" Center="[-45.8333,0,45.8333]" Neighbor="(EdgeIndex XY:-1 YZ:89 ZX:-1)">
+					<EdgeCenter>
+						<AB>[-43.75,0,50] ( 4.65847 ) </AB>
+						<BC>[-43.75,0,43.75] ( 2.94628 ) </BC>
+						<CA>[-50,0,43.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="89" Center="[-41.6667,0,41.6667]" Neighbor="(EdgeIndex XY:90 YZ:88 ZX:74)">
+					<EdgeCenter>
+						<AB>[-43.75,0,37.5] ( 4.65848 ) </AB>
+						<BC>[-43.75,0,43.75] ( 2.94628 ) </BC>
+						<CA>[-37.5,0,43.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="90" Center="[-33.3333,0,45.8333]" Neighbor="(EdgeIndex XY:89 YZ:91 ZX:-1)">
+					<EdgeCenter>
+						<AB>[-31.25,0,50] ( 4.65847 ) </AB>
+						<BC>[-31.25,0,43.75] ( 2.94628 ) </BC>
+						<CA>[-37.5,0,43.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="91" Center="[-29.1667,0,41.6667]" Neighbor="(EdgeIndex XY:92 YZ:90 ZX:76)">
+					<EdgeCenter>
+						<AB>[-31.25,0,37.5] ( 4.65848 ) </AB>
+						<BC>[-31.25,0,43.75] ( 2.94628 ) </BC>
+						<CA>[-25,0,43.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="92" Center="[-20.8333,0,45.8333]" Neighbor="(EdgeIndex XY:91 YZ:93 ZX:-1)">
+					<EdgeCenter>
+						<AB>[-18.75,0,50] ( 4.65847 ) </AB>
+						<BC>[-18.75,0,43.75] ( 2.94628 ) </BC>
+						<CA>[-25,0,43.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="93" Center="[-16.6667,0,41.6667]" Neighbor="(EdgeIndex XY:94 YZ:92 ZX:78)">
+					<EdgeCenter>
+						<AB>[-18.75,0,37.5] ( 4.65848 ) </AB>
+						<BC>[-18.75,0,43.75] ( 2.94628 ) </BC>
+						<CA>[-12.5,0,43.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="94" Center="[-8.33333,0,45.8333]" Neighbor="(EdgeIndex XY:93 YZ:95 ZX:-1)">
+					<EdgeCenter>
+						<AB>[-6.25,0,50] ( 4.65847 ) </AB>
+						<BC>[-6.25,0,43.75] ( 2.94628 ) </BC>
+						<CA>[-12.5,0,43.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="95" Center="[-4.16667,0,41.6667]" Neighbor="(EdgeIndex XY:96 YZ:94 ZX:-1)">
+					<EdgeCenter>
+						<AB>[-6.25,0,37.5] ( 4.65848 ) </AB>
+						<BC>[-6.25,0,43.75] ( 2.94628 ) </BC>
+						<CA>[0,0,43.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="96" Center="[4.16667,0,45.8333]" Neighbor="(EdgeIndex XY:95 YZ:97 ZX:-1)">
+					<EdgeCenter>
+						<AB>[6.25,0,50] ( 4.65847 ) </AB>
+						<BC>[6.25,0,43.75] ( 2.94628 ) </BC>
+						<CA>[0,0,43.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="97" Center="[8.33333,0,41.6667]" Neighbor="(EdgeIndex XY:98 YZ:96 ZX:80)">
+					<EdgeCenter>
+						<AB>[6.25,0,37.5] ( 4.65848 ) </AB>
+						<BC>[6.25,0,43.75] ( 2.94628 ) </BC>
+						<CA>[12.5,0,43.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="98" Center="[16.6667,0,45.8333]" Neighbor="(EdgeIndex XY:97 YZ:99 ZX:-1)">
+					<EdgeCenter>
+						<AB>[18.75,0,50] ( 4.65847 ) </AB>
+						<BC>[18.75,0,43.75] ( 2.94628 ) </BC>
+						<CA>[12.5,0,43.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="99" Center="[20.8333,0,41.6667]" Neighbor="(EdgeIndex XY:100 YZ:98 ZX:82)">
+					<EdgeCenter>
+						<AB>[18.75,0,37.5] ( 4.65848 ) </AB>
+						<BC>[18.75,0,43.75] ( 2.94628 ) </BC>
+						<CA>[25,0,43.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="100" Center="[29.1667,0,45.8333]" Neighbor="(EdgeIndex XY:99 YZ:101 ZX:-1)">
+					<EdgeCenter>
+						<AB>[31.25,0,50] ( 4.65847 ) </AB>
+						<BC>[31.25,0,43.75] ( 2.94628 ) </BC>
+						<CA>[25,0,43.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="101" Center="[33.3333,0,41.6667]" Neighbor="(EdgeIndex XY:102 YZ:100 ZX:84)">
+					<EdgeCenter>
+						<AB>[31.25,0,37.5] ( 4.65848 ) </AB>
+						<BC>[31.25,0,43.75] ( 2.94628 ) </BC>
+						<CA>[37.5,0,43.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="102" Center="[41.6667,0,45.8333]" Neighbor="(EdgeIndex XY:101 YZ:103 ZX:-1)">
+					<EdgeCenter>
+						<AB>[43.75,0,50] ( 4.65847 ) </AB>
+						<BC>[43.75,0,43.75] ( 2.94628 ) </BC>
+						<CA>[37.5,0,43.75] ( 4.65848 ) </CA>
+					</EdgeCenter>
+				</Value>
+				<Value TriIndex="103" Center="[45.8333,0,41.6667]" Neighbor="(EdgeIndex XY:-1 YZ:102 ZX:86)">
+					<EdgeCenter>
+						<AB>[43.75,0,37.5] ( 4.65848 ) </AB>
+						<BC>[43.75,0,43.75] ( 2.94628 ) </BC>
+						<CA>[50,0,43.75] ( 4.65847 ) </CA>
+					</EdgeCenter>
+				</Value>
+			</NaviCell>
+			<WIRECOLOR>225, 198, 87</WIRECOLOR>
+		</Object>
+	</Body>

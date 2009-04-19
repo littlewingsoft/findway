@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <queue>
 
 #include "findWay.h"
 #include "./tinyXml/tinyXml.h"
@@ -406,9 +407,26 @@ namespace fw
 		return false;
 	}
 
-	// 현재 쎌에서 가장 가장치가 적은 이웃셀을 찾는다.
-	// 이웃셀이 하나도 없으면(그럴린없지만) -1 반환
-	int FindSmallestHeuristicCell( int cellIndex, const D3DXVECTOR3& endPos, vector<int>& closeList )
+	float ComputeHeuristic( const D3DXVECTOR3& currentCenter, const D3DXVECTOR3& goal )
+	{
+		float deltaX = fabs(goal.x - currentCenter.x);
+		float deltaY = fabs(goal.y - currentCenter.y);
+		float deltaZ = fabs(goal.z - currentCenter.z);
+		float heuristic = max( max( deltaX, deltaY ), deltaZ );
+		return heuristic ;
+	}
+
+	//priority_Vector
+	fwPathHeap g_PathHeap;
+
+	/*
+		 현재 쎌의 모든 이웃셀을 찾는다. 
+		 if ( 오픈리스트.찾기(이웃셀) == 있다 )
+		 { 있으면 그냥 넘어가. }
+		 else
+		 { 인덱스를 오픈리스트에 넣는다. }	
+	*/
+	int FindSmallestHeuristicCell_AddOpenList( int cellIndex, const D3DXVECTOR3& endPos )
 	{
 		const fwMesh& kMesh = GetMesh("navi_ground");
 
@@ -417,128 +435,104 @@ namespace fw
 		std::map<float,int> sortIndexmap; //key가 되는값으로 소팅되므로 가장 마지막것을 선택하면됨.
 		const fwNaviCell& currCell= kMesh.CellBuffer[ cellIndex ];
 
-
-
 		for( int indexCnt= 0; indexCnt<3; indexCnt++ )
 		{
 			int neighborIndex = currCell.NeighborTri[ indexCnt ];
 			if( neighborIndex == -1 )  // 이웃이 있어야함.
 				continue;
 
-			vector<int>::iterator it = find( closeList.begin(), closeList.end() , neighborIndex );
-
-			if( it != closeList.end() ) // 한번도 순회한적 없어야함.
-				continue;
-
-				D3DXVECTOR3 delta = endPos - kMesh.CellBuffer[neighborIndex].center;   // currCell.center; //목표점은 시작위치다.
-				float heuristic = max( max( fabs(delta.x), fabs(delta.y) ), fabs(delta.z) );//
-				float cost = currCell.arrivalCost[ indexCnt ];
-				float totalheuristic  = heuristic + cost;
-				sortIndexmap[ totalheuristic  ] = neighborIndex ;
-				closeList.push_back( neighborIndex );
+//			const fwNaviCell& neighborCell = kMesh.CellBuffer[neighborIndex];
+			// 한번도 추가된적없는 요소를 오픈리스트에 넣어야함.
+			
+			// 부모로부터 내위치까지의거리. 
+			// 현재셀이 부모가 되고 이웃셀은 이때 현재셀이된다.
+			///float G_costFromParent = 0.0f;
+			fwPathNode topNode ;
+			g_PathHeap.Top( topNode );
+			//if(  );
+			//currCell.arrivalCost[ indexCnt ] ;
+			//float H_costToGoal = ComputeHeuristic( neighborCell.center , endPos );
+			//float totalheuristic  = heuristic + cost;
+			//fw::fwPathNode( cellIndex, neighborIndex, 
 		}
 
-		if( sortIndexmap.empty() == false )
-		{
-			std::map<float,int>::iterator it= sortIndexmap.begin();
-			return (*it).second;
-		}
+		//if( sortIndexmap.empty() == false )
+		//{
+		//	std::map<float,int>::iterator it= sortIndexmap.begin();
+		//	return (*it).second;
+		//}
 
-		return - 1;
+		return -1;
 	}
 
 
-struct node
-{
-	D3DXVECTOR3 pos;
-	float costFromStart;
-	float constToGoal;
-	node*	pkParent;
-};
-float PathCostEstimate( const D3DXVECTOR& start, const D3DXVECTOR3 goal )
-{
-	
-}
 
-	/**
-	*  A* algorithm 의 pseudo code
-Open: priorityqueue of searchnode
 
-Closed: list of searcnode
+/**
+
+
+
+용어
+열린목록 : 가능성이 있는 지점을 저장한 목록.
+닫힌목록 : 가능성이 없는 지점을 저장한 목록. 따라서 다시는 볼 필요가 없다.
+
+
+정리
+열린목록 : 우선순위 큐 (F=G+H 값이 작을수록 높은 우선순위)
+
+열린목록을 우선순위 큐로 할 상황이 아니거나, 다른 자료구조로 할 필요성이 생겼을 때는 아래 알고리즘에서 열린목록.뺌 을 다음과 같이 이해하면 된다
+
+열린목록.뺌 - 열린목록 중 F=G+H 값이 가장 작은 값을 빼오면 된다
+
+닫힌목록 : 어떠한 자료구조 무관할 듯(속도를 위해서라면 map이겠지)
 
  
+1) 열린목록.추가(시작지점)
+2) 반복
 
-AStarSearch (location StartLoc, location GoalLoc, agenttype Agent)
+  1) 현재지점 = 열린목록.뺌()
+  2) 닫힌목록.푸시(현재지점)
+  3) foreach(인접지점 in 현재지점 인접)
 
-        clear Open and Closed 
+    1) if(인접지점.갈수있음() && not 닫힌목록.포함(인접지점))
 
-        StartNode.Loc = StartLoc
-        StartNode.CostFromStart=0
-        StartNode.CostToGoal=PathCostEstimate( StartLoc, GoalLoc, Agent) // 그냥 최고값싼이동비용의 이웃을 찾자.
-        StartNode.Parent =null
-        push StartNode on Open
+      1) if(not 열린목록.포함(인접지점))
 
-        while Open is not empty
+        1) 열린목록.추가(인접지점)
+        2) 인접지점.부모 = 현재지점
+        3) 인접지점.F비용계산() | 방법 >> F = G(인접지점.부모.F비용) + H(GOAL까지 거리) | 인접지점.부모 는 현재지점이므로 G 를 현재지점.F비용으로 하면 됨
 
-                pop Node from Open
+      2) else // if(열린목록.포함(인접지점))
 
-                if (Node is a goal node)
-                {
-				   construct a path backward from Node to StartLoc 
-                   return success 경로.
-				}
-                else
-                        for each successor NewNode of Node
-                                NewCost = Node.CostFromStart + TraverseCost(Node, NewNode, Agent)
+        1) 인접지점.G비용계산() | 방법 >> 현재비용.F비용(인접지점.부모 는 지정안되어있있으므로 인접지점.부모.F비용으로 하면 안됨)
+        2) 계산된 비용이 더 작으면
 
-                                if (NewNode is in Open or Closed) and
-                                        continue
+          1) 인접지점.부모 = 현재지점
+          2) 인접지점.F비용계산() | 방법 >> F = G(인접지점.부모.F비용) + H(GOAL까지 거리) | 인접지점.부모 는 현재지점이므로 G 를 현재지점.F비용으로 하면 됨
 
-                                else  
-                                   NewNode.Parent=Node
-                                   NewNode.CostFromStart=NewCost
-                                   NewNode.CostToGoal=PathCostEstimate(NewNode.Loc,GoalLoc,Agent)
-							       NewNode.TotalCost=NewNode.CostFromStart+NewNode.CostToGoal
-
-                                        if (NewNode is in Closed)
-                                                remove NewNode from Closed
-
-                                        
-
-                                        if (NewNode is in Open)
-                                                adjust NewNode's location in Open
-                                        else
-                                                push NewNode onto Open
-					
-                  push Node onto Closed// 한번 검색한건 닫힌목록에 넣기.
-        
-
-        retrn failure
-
-[출처] A* algorithm 의 pseudo code|작성자 즐프
+    2) 목표지점을 열린목록에 추가했다면, foreach 빠져나감
+    3) 열린목록이 비었다면, 찾는데 실패했으므로 foreach 빠져나감
 
 
+3) 길저장하기 | 방법 >> 목표지점으로 부터 각 부모지점을 따라가다, 첫지점이 나올 때까지 스택에 저장하라.
+4) 길따라가기 | 방법 >> 스택에서 하나씩 pop() 하면 된다.
 	*/
+
+
+	static std::vector<int> closeList; //가능성없는것.
+	static std::priority_queue<fwPathNode > openList; //가능성 있는것. vector<fwPathNode>,fw::fwPathNode_Comparison 
+	
 	// 이미 외부에서는 반직선 값만 넘겨주게 해야 될듯. 피킹으로 삼각형(셀) 인덱스를 찾아서 넘겨줬다. 
 	// 일단 pathList 는 최단거리 최적화는 하지않는다.
 	void FindWay( const int endCellIndex, const D3DXVECTOR3& end_pos, const int startCellIndex, const D3DXVECTOR3& start_pos, std::vector< D3DXVECTOR3> & pathList )
 	{
 		pathList.clear();
-		//deltax = (목표점.x - 현제셀중점.x)
-		//deltay = (목표점.y - 현제셀중점.y)
-		//deltaz = (목표점.z - 현제셀중점.z)
-		//max(max(deltax, deltay), deltaz)
-
-		static std::vector<int> closeList; //이미 검사한것은 여기에 들어가고 
+		while( openList.empty() == false ) openList.pop();
 		closeList.clear();
-
+	
 		// 새로운 이웃셀을 체크할때 여기에 있는지 체크해본뒤 있다면 건너뜀.
 		int  currCell = startCellIndex;
-
-		std::list<int> cellList; // index를 담을 list 
-
 		pathList.push_back( start_pos );
-
 		if( currCell == endCellIndex  )
 		{
 			pathList.push_back( end_pos );
@@ -547,48 +541,65 @@ AStarSearch (location StartLoc, location GoalLoc, agenttype Agent)
 		{
 			const fwMesh& kMesh = GetMesh("navi_ground");
 
-			closeList.push_back(startCellIndex );
-			currCell = FindSmallestHeuristicCell( startCellIndex , end_pos, closeList );
-			if( currCell != endCellIndex )
+			//float costToGoal = ComputeHeuristic( kMesh.CellBuffer[startCellIndex].center , end_pos );
+			//openList.push( fwPathNode(startCellIndex, 0, costToGoal ) );
+
+			while( openList.empty()==false )
 			{
-					D3DXVECTOR3 pos = kMesh.CellBuffer[ currCell ].center;
-					pathList.push_back( pos ); // 최종적인 위치를 넣어줄까. 아니면 셀의 인덱스 리스트를 넘겨줄까.
-					// 일단 위치만 원초적으로 넣어주자. 모듈사용자가 계산하게 만들면 골치아픔.
-			}
+//				int smallHeuriCellIndex = FindSmallestHeuristicCell( currCell , end_pos );
+				fwPathNode currentNode = openList.top(); // 이동거리가 가장짧은녀석, 고로 경로가 될 가장 유망한놈.
+				openList.pop();
+				//closeList.push_back( currentNode.cellIndex ); // 미리 넣어도 무방.
 
+				const fwNaviCell& currCell = kMesh.CellBuffer[ currentNode.kCurrentCell_Index ];
 
-			while( currCell != endCellIndex  )
-			{
-				//시작위치의 셀 인덱스까지 검출되면 모두 찾은것이므로 루프 탈출
-
-				//이웃삼각형 3개를 검사한다.
-				//3개중에 가중치가 가장 큰놈이 어떤것인지 골라보자.
-
-				int smallHeuriCellIndex = FindSmallestHeuristicCell( currCell , end_pos, closeList );
-				
-				if( smallHeuriCellIndex != -1 )
+				for( int indexCnt= 0; indexCnt<3; indexCnt++ )
 				{
-					cellList.push_back( smallHeuriCellIndex );
-					currCell = smallHeuriCellIndex;
+					int neighborIndex = currCell.NeighborTri[ indexCnt ];
 
-					if( currCell != endCellIndex )
-					{
-						D3DXVECTOR3 pos = kMesh.CellBuffer[ currCell ].center;
-						pathList.push_back( pos ); // 최종적인 위치를 넣어줄까. 아니면 셀의 인덱스 리스트를 넘겨줄까.
-						// 일단 위치만 원초적으로 넣어주자. 모듈사용자가 계산하게 만들면 골치아픔.
-					}
-					else
-					{
-						// 그리고 길찾기는 종료됨.
-						break;
-					}
-				}else
-					break;
+					std::vector<int>::iterator it = std::find(closeList.begin(),closeList.end(),neighborIndex);
+
+					if( neighborIndex == -1 || it == closeList.end() )  // 이웃이없거나 이미검색한 리스트에 있으면 건너뛰기
+						continue;
+
+					float costFromStart = currentNode.GetTotalCost() + currCell.arrivalCost[ indexCnt ]; //시작점에서 현재까지의 거리값;
+					float costToGoal = ComputeHeuristic( kMesh.CellBuffer[neighborIndex].center, end_pos  );
+
+					//if( 
+					openList.push( fwPathNode( -2, neighborIndex, costFromStart,costToGoal ) );
+				}
+
+				
+				//if( smallHeuriCellIndex != -1 )
+				//{
+				//	//cellList.push_back( smallHeuriCellIndex );
+				//	currCell = smallHeuriCellIndex;
+
+				//	if( currCell != endCellIndex )
+				//	{
+				//		D3DXVECTOR3 pos = kMesh.CellBuffer[ currCell ].center;
+				//		pathList.push_back( pos ); // 최종적인 위치를 넣어줄까. 아니면 셀의 인덱스 리스트를 넘겨줄까.
+				//		// 일단 위치만 원초적으로 넣어주자. 모듈사용자가 계산하게 만들면 골치아픔.
+				//	}
+				//	else
+				//	{
+				//		// 그리고 길찾기는 종료됨.
+				//		break;
+				//	}
+				//}else
+				//	break;
 			}
 
 			// 보간될 길을 모두 찾았으면 end_pos 가 최종위치임.
 				pathList.push_back( end_pos );
 		}
+
+	}
+
+
+	void deprecated_FindWay( const int endCellIndex, const D3DXVECTOR3& end_pos, 
+				const int startCellIndex, const D3DXVECTOR3& start_pos, std::vector< D3DXVECTOR3> & pathList )
+	{
 
 	}
 

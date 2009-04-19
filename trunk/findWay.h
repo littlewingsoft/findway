@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <list>
 #include <vector>
 
@@ -11,25 +12,40 @@
 namespace fw
 {
 
-	class fwRefObject
-	{
-		int m_nRefCnt;
-		fwRefObject():m_nRefCnt(0){}
+	//class fwRefObject
+	//{
+	//	int m_nRefCnt;
+	//	fwRefObject():m_nRefCnt(0){}
 
-		int GetRefCnt(){ return m_nRefCnt; }
+	//	int GetRefCnt(){ return m_nRefCnt; }
 
-		void IncreaseCount()
-		{
-			m_nRefCnt++; 
-		}
+	//	void IncreaseCount()
+	//	{
+	//		m_nRefCnt++; 
+	//	}
 
-		void DecreaseCount()
-		{
-			m_nRefCnt--; 
-			if( m_nRefCnt == 0 )
-				delete this;
-		}		
-	};
+	//	void DecreaseCount()
+	//	{
+	//		m_nRefCnt--; 
+	//		if( m_nRefCnt == 0 )
+	//			delete this;
+	//	}		
+	//};
+//// 자식리스트를 가지며 검색할수있다.
+	//class fwNode: public fwRefObject
+	//{
+	//	fwNode* pkParent;
+	//	std::list<fwNode*> childList;
+	//public:
+	//	fwNode():pkParent(0){}
+	//	~fwNode(){ childList.clear(); }
+
+	//	AttachChildNode( fwNode* pkNode ){ childList.push_back( pkNode ); }
+	//	DetachChildNode( fwNode* pkNode ){ childList.erase( std::find( childList.begin(),childList.end(),pkNode ); }
+
+	//	fwNode& GetObjectByName( const std::string& name );
+	//	const fwNode& GetObjectByName( const std::string& name );
+	//};
 
 	/*
 		viewer 에서만 쓰일값
@@ -46,15 +62,6 @@ namespace fw
 		DWORD	Color;
 	};
 
-	// 길찾기에 쓰일 재료. 미리 익스포터에서 preCalculation 해놓는다. 
-	struct fwNaviCell
-	{
-		D3DXVECTOR3 center;
-		int NeighborTri[3]; //ab,bc,ca 변을 공유하는 순.
-		D3DXVECTOR3 edgeCenter[3]; //ab - bc- ca 순
-		float		arrivalCost[3];//삼각형중심에서 각ab, bc,ca 순으로 중심까지 거리값.
-	};
-
 	// 트라이앵글에는 버텍스의 인덱스만 존재함.
 	// 고로 버텍스,인덱스 버퍼는 꼭 존재해야됨.
 	struct Triangle
@@ -62,21 +69,113 @@ namespace fw
 		WORD index0,index1,index2; 
 	};
 
-	//// 자식리스트를 가지며 검색할수있다.
-	//class fwNode: public fwRefObject
-	//{
-	//	fwNode* pkParent;
-	//	std::list<fwNode*> childList;
-	//public:
-	//	fwNode():pkParent(0){}
-	//	~fwNode(){ childList.clear(); }
 
-	//	AttachChildNode( fwNode* pkNode ){ childList.push_back( pkNode ); }
-	//	DetachChildNode( fwNode* pkNode ){ childList.erase( std::find( childList.begin(),childList.end(),pkNode ); }
+	// 길찾기에 쓰일 재료. 미리 익스포터에서 preCalculation 해놓는다. 
+	struct fwNaviCell
+	{
+		D3DXVECTOR3 center;
+		int NeighborTri[3]; //ab,bc,ca 변을 공유하는 순.
+		D3DXVECTOR3 edgeCenter[3]; //ab - bc- ca 순
+		float		arrivalCost[3];//삼각형중심에서 각ab, bc,ca 순으로 중심까지 거리값. 
+	};
 
-	//	fwNode& GetObjectByName( const std::string& name );
-	//	const fwNode& GetObjectByName( const std::string& name );
-	//};
+	//시작점과 목표점에대하여 최종 가중치를 저장하고 
+	//셀인덱스를 저장해놓는다.
+	struct fwPathNode
+	{
+		// 현재 셀이 어느 부모와 가장 거리비용이 싼지 저장해놓고 
+		// 최종적으로 경로를 만들때 목적지로부터 시작지로 거슬러 올라간다. 그러므로 첨부터 시작지랑 목적지가 바뀌면 편함.
+		int kParentCell_Index;
+
+		// 현재 가르키는 셀
+		int kCurrentCell_Index; 
+
+		//a* 에선 G 로 불리운다. 말그대로 시작지부터 현재 셀 까지 누적이동값
+		float	costFromStart; 
+
+		//a* 에선 H로 통용된다. 말그대로 목적지까지의 값. 묻지도 말고 따지지도 말고 목적지와 가중치 계산함.
+		float	costToGoal;	   
+
+		fwPathNode(): kParentCell_Index(-1),kCurrentCell_Index(-1),costFromStart(0.0f),costToGoal(0.0f){}
+		fwPathNode( int _kParentCell_Index, int _cellIndex, float _costFromStart,float _costToGoal )
+		{
+			kParentCell_Index = _kParentCell_Index;
+			kCurrentCell_Index= _cellIndex ;
+			costFromStart = _costFromStart;
+			costToGoal = _costToGoal;
+		}
+
+		bool operator < (const fwPathNode& ref) const
+		{
+			return GetTotalCost() < ref.GetTotalCost() ;
+		}
+
+		bool operator > (const fwPathNode& ref ) const
+		{
+			return GetTotalCost() > ref.GetTotalCost();
+		}
+
+		bool operator == (const fwPathNode& ref ) const
+		{
+			return GetTotalCost() == ref.GetTotalCost() ;
+		}
+
+
+		float GetTotalCost()const { return costToGoal+costFromStart; }
+	};
+
+	
+	class fwPathHeap
+	{
+		typedef std::vector<fwPathNode> container;
+		container	m_OpenList;
+		//std::greater<fwPathNode> lowTopComparison;			
+	public:
+		fwPathHeap()
+		{
+			m_OpenList.clear();
+		}
+
+		bool Top( fwPathNode& node )
+		{
+			if( m_OpenList.empty() )
+			{
+				node = fwPathNode();
+				return false;
+			}
+			container::iterator it = m_OpenList.begin();
+			node = *it;
+			return true;
+		}
+		
+		bool IsInHeap( int cellIndex )
+		{
+			if( m_OpenList.empty() )
+				return false;
+
+			std::foreach(  int ind, m_OpenList.begin(), m_OpenList.end() )
+			{
+			
+			}
+			return false;
+		}
+		void PopHead()
+		{
+			if( m_OpenList.empty() == false )
+			m_OpenList.erase( m_OpenList.begin() );
+		}
+
+		void AddPathNode( const fwPathNode& node )
+		{
+			// 노드가 이미 있으면 집어넣지 않아.
+			// 다만 코스트가 더 적으면 그것을 적용시킴.
+			
+			m_OpenList.push_back( node );
+			std::sort( m_OpenList.begin(), m_OpenList.end() );
+			//std::make_heap( m_OpenList.begin(), m_OpenList.end() );
+			//std::push_heap( m_OpenList.begin(), m_OpenList.end()+1, lowTopComparison );
+		}
+	};
 
 	class fwMesh //화면에 출력하거나 위치값을 갖기위한 core 한값.
 	{

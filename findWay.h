@@ -86,17 +86,17 @@ namespace fw
 		// 현재 셀이 어느 부모와 가장 거리비용이 싼지 저장해놓고 
 		// 최종적으로 경로를 만들때 목적지로부터 시작지로 거슬러 올라간다. 그러므로 첨부터 시작지랑 목적지가 바뀌면 편함.
 		int kParentCell_Index;
-
 		// 현재 가르키는 셀
 		int kCurrentCell_Index; 
 
+		
 		//a* 에선 G 로 불리운다. 말그대로 시작지부터 현재 셀 까지 누적이동값
 		float	costFromStart; 
 
 		//a* 에선 H로 통용된다. 말그대로 목적지까지의 값. 묻지도 말고 따지지도 말고 목적지와 가중치 계산함.
 		float	costToGoal;	   
 
-		fwPathNode(): kParentCell_Index(-1),kCurrentCell_Index(-1),costFromStart(0.0f),costToGoal(0.0f){}
+		fwPathNode(): kParentCell_Index (-1),kCurrentCell_Index(-1),costFromStart(0.0f),costToGoal(0.0f){}
 		fwPathNode( int _kParentCell_Index, int _cellIndex, float _costFromStart,float _costToGoal )
 		{
 			kParentCell_Index = _kParentCell_Index;
@@ -129,7 +129,7 @@ namespace fw
 	{
 		typedef std::vector<fwPathNode> container;
 		container	m_OpenList;
-		//std::greater<fwPathNode> lowTopComparison;			
+	
 	public:
 		fwPathHeap()
 		{
@@ -153,10 +153,16 @@ namespace fw
 			if( m_OpenList.empty() )
 				return false;
 
-			std::foreach(  int ind, m_OpenList.begin(), m_OpenList.end() )
-			{
+			container::iterator it = m_OpenList.begin();
 			
+			while( it != m_OpenList.end()  )
+			{
+				const fwPathNode& node = *it;
+				if( node.kCurrentCell_Index == cellIndex )
+					return true;
+				it++;
 			}
+
 			return false;
 		}
 		void PopHead()
@@ -165,15 +171,42 @@ namespace fw
 			m_OpenList.erase( m_OpenList.begin() );
 		}
 
+		void clear()
+		{
+			m_OpenList.clear();
+		}
+
+		bool empty()
+		{
+			return m_OpenList.empty();
+		}
+
 		void AddPathNode( const fwPathNode& node )
 		{
 			// 노드가 이미 있으면 집어넣지 않아.
 			// 다만 코스트가 더 적으면 그것을 적용시킴.
+			if( IsInHeap( node.kCurrentCell_Index ) == false )
+			{
+				m_OpenList.push_back( node );
+			}else
+			{
+				container::iterator it = m_OpenList.begin();
+
+				while( it != m_OpenList.end()  )
+				{
+					fwPathNode& tmpNode= *it;
+					if( tmpNode.kCurrentCell_Index == node.kCurrentCell_Index )
+					{
+						if( tmpNode.GetTotalCost() > node.GetTotalCost() )
+						tmpNode= node;
+						break;
+					}
+					it++;
+				}
+			}
+
+			std::sort( m_OpenList.begin(), m_OpenList.end() );			
 			
-			m_OpenList.push_back( node );
-			std::sort( m_OpenList.begin(), m_OpenList.end() );
-			//std::make_heap( m_OpenList.begin(), m_OpenList.end() );
-			//std::push_heap( m_OpenList.begin(), m_OpenList.end()+1, lowTopComparison );
 		}
 	};
 

@@ -85,7 +85,6 @@ void    RenderText();
 
 
 
-#include <queue>
 
 //--------------------------------------------------------------------------------------
 // Entry point to the program. Initializes everything and goes into a message processing 
@@ -93,47 +92,6 @@ void    RenderText();
 //--------------------------------------------------------------------------------------
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow )
 {
-
-	fw::fwPathHeap heap;
-	heap.AddPathNode( fw::fwPathNode(-1,5,50,10) );
-	heap.AddPathNode( fw::fwPathNode(-1,3,30,10) );
-	heap.AddPathNode( fw::fwPathNode(-1,1,10,10) );
-	heap.AddPathNode( fw::fwPathNode(-1,4,40,10) );
-	heap.AddPathNode( fw::fwPathNode(-1,2,20,10) );
-
-	fw::fwPathNode node;
-	heap.Top( node );
-	heap.PopHead();
-	heap.Top( node );
-	heap.PopHead();
-	heap.Top( node );
-	heap.PopHead();
-	heap.Top( node );
-	heap.PopHead();
-	heap.Top( node );
-	heap.PopHead();
-	heap.Top( node );
-	heap.PopHead();
-	heap.Top( node );
-	heap.PopHead();
-	heap.Top( node );
-	heap.PopHead();
-	heap.Top( node );
-	heap.PopHead();
-	heap.Top( node );
-	heap.PopHead();
-	heap.Top( node );
-	heap.PopHead();
-
-int a=0;
-
-	//std::priority_queue< fw::fwPathNode > openList; //가능성 있는것. vector<fwPathNode>,fw::fwPathNode_Comparison 
-	//openList.push( fw::fwPathNode( 0, 10,10 ) );
-	//openList.push( fw::fwPathNode( 1, 10,10 ) );
-	//openList.push( fw::fwPathNode( 2, 10,10 ) );
-	//std::find( openList.begin(), openList.end(), 2  );
-
-
     // Enable run-time memory check for debug builds.
 #if defined(DEBUG) | defined(_DEBUG)
     _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );

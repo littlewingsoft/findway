@@ -403,6 +403,64 @@ HRESULT CALLBACK OnD3D9ResetDevice( IDirect3DDevice9* pd3dDevice,
     return S_OK;
 }
 
+// line 은 bias 가 안먹는다. 뷰포트 변환으로 해결?
+
+void Render_Line( LPDIRECT3DDEVICE9 lpDev, const std::vector< D3DXVECTOR3 >& posList )//fw::Vertex
+	{
+		if( posList.empty() )
+			return;
+
+D3DVIEWPORT9 mViewport;   // 뷰포트 데이터 저장
+D3DVIEWPORT9 mNewViewport; // 새로운 뷰포트 데이터 저장
+
+// 뷰포트에 의해 사용되는 전역 변수 
+// 다음 식을 사용해서 1 의 ZBIAS 값을 하드코딩 
+//          MinZ - 256/(2^24-1) 과
+//          MaxZ - 256/(2^24-1)
+// 2^24 는 Zbits 의 개수로부터 나온다. 그리고  256 은  
+// Intel (R) Integrated Graphics 를 위해 동작한다, 
+
+// 그러나 그것은 16의 배수라면 어떤 것이라도 상관없다.
+float g_fViewportBias = 0.0000152588f;
+
+// 투영 행렬이 적용된다.
+// 뷰 행렬이 적용된다.
+lpDev->GetViewport(&mViewport);
+
+
+// 이전의 뷰포트를 새로운 뷰포트에 복사.
+mNewViewport = mViewport;
+
+// bias 변경
+mNewViewport.MinZ -= g_fViewportBias; 
+mNewViewport.MaxZ -= g_fViewportBias; 
+
+
+		WORD tmpIndex[4096]={0,};
+		for( size_t n=0; n<posList.size()*2; n += 2 )
+		{
+			if( n==0 )
+			tmpIndex[0] = 0;
+			else
+			tmpIndex[n] = n/2;
+
+			tmpIndex[n+1] = tmpIndex[n]+1;
+		}
+
+		D3DXMATRIXA16 matWorld;
+		D3DXMatrixIdentity( &matWorld );
+		lpDev->SetTransform( D3DTS_WORLD, &matWorld );
+		lpDev->SetFVF( D3DFVF_XYZ );//| D3DFVF_DIFFUSE 
+		lpDev->SetViewport( &mNewViewport );
+
+	    lpDev->SetRenderState( D3DRS_LIGHTING, TRUE );
+		lpDev->DrawIndexedPrimitiveUP( D3DPT_LINELIST, 0, posList.size(),   posList.size()-1, tmpIndex, D3DFMT_INDEX16,
+			(const void*)&(*(posList.begin())), sizeof( D3DXVECTOR3 ) );
+
+		lpDev->SetViewport( &mViewport );
+	    lpDev->SetRenderState( D3DRS_LIGHTING, FALSE );
+	}
+
 		using namespace fw;
 	inline DWORD F2DW( FLOAT f ) { return *((DWORD*)&f); }
 	void RenderMesh( LPDIRECT3DDEVICE9 lpDev, const fw::fwMesh& mesh )
@@ -417,7 +475,6 @@ HRESULT CALLBACK OnD3D9ResetDevice( IDirect3DDevice9* pd3dDevice,
 		lpDev->SetFVF( D3DFVF_XYZ | D3DFVF_DIFFUSE);//
 
 		int TriCnt = mesh.TriBuffer.size();
-		//std::vector< fw::Triangle>::const_iterator triIt= mesh.TriBuffer.begin();
 		int vtxCnt = mesh.VtxBuffer.size();
 
 		// Turn off depth bias
@@ -459,18 +516,36 @@ HRESULT OnRenderPrimitive(IDirect3DDevice9* pd3dDevice, double fTime, float fEla
 {
 	RenderMesh( pd3dDevice, fw::GetMesh("navi_ground") );	
 
+		//pathList.clear();
+		//pathList.push_back( D3DXVECTOR3( 6,0,0 ) );
+		//pathList.push_back( D3DXVECTOR3( 2,0,0 ) );
+		//pathList.push_back( D3DXVECTOR3( -2,0,0 ) );
+		//Render_Line(pd3dDevice,pathList  );
+
 	try
 	{
-		for( size_t n=0; n< pathList.size(); n++)
+		if( pathList.empty() == false )
 		{
-			fw::GetMesh("point").LocalMat._41 = pathList[n].x;
-			fw::GetMesh("point").LocalMat._42 = pathList[n].y;
-			fw::GetMesh("point").LocalMat._43 = pathList[n].z;
-//			D3DXMatrixTranslation( &fw::GetMesh("agent").LocalMat,  pathList[n].x, pathList[n].y, pathList[n].z );
-			RenderMesh( pd3dDevice, fw::GetMesh("point") );
-		}
-
+		fw::GetMesh("point").LocalMat._41 = pathList[0].x;
+		fw::GetMesh("point").LocalMat._42 = pathList[0].y;
+		fw::GetMesh("point").LocalMat._43 = pathList[0].z;
 		RenderMesh( pd3dDevice, fw::GetMesh("point") );
+
+		fw::GetMesh("point").LocalMat._41 = pathList[pathList.size()-1].x;
+		fw::GetMesh("point").LocalMat._42 = pathList[pathList.size()-1].y;
+		fw::GetMesh("point").LocalMat._43 = pathList[pathList.size()-1].z;
+		RenderMesh( pd3dDevice, fw::GetMesh("point") );
+
+//		for( size_t n=0; n< pathList.size(); n++)
+		{
+//			fw::GetMesh("point").LocalMat._41 = pathList[n].x;
+//			fw::GetMesh("point").LocalMat._42 = pathList[n].y;
+//			fw::GetMesh("point").LocalMat._43 = pathList[n].z;
+//			D3DXMatrixTranslation( &fw::GetMesh("agent").LocalMat,  pathList[n].x, pathList[n].y, pathList[n].z );
+			//RenderMesh( pd3dDevice, fw::GetMesh("point") );
+		}
+		Render_Line(pd3dDevice, pathList );
+		}
 	}
 	catch( std::exception ex )
 	{
@@ -660,6 +735,7 @@ bool IntersectTriangle( const RAY& ray, D3DXVECTOR3& v0, D3DXVECTOR3& v1, D3DXVE
 }
 
 
+//최종 경로 라인 그리기.
 void DrawCellInfo()
 {
 	return ;
@@ -688,6 +764,7 @@ void DrawCellInfo()
 	//bs.str(L""); bs.clear();
 	//bs<< cell.NeighborTri[2];
 	//g_stNeighBorIndex[2] = bs.str();
+
 
 }
 
@@ -780,7 +857,7 @@ void OnLButtonDown()
 		int startCellIndex = tmpStartInfo.cellIndex;
 		D3DXVECTOR3 start_pos = tmpStartInfo.pos;
 
-		fw::FindWay( endCellIndex, end_pos, startCellIndex, start_pos, pathList );
+		fw::FindWay( startCellIndex, start_pos, endCellIndex, end_pos, pathList );
 		pickList.clear();
 	}
 

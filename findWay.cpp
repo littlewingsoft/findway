@@ -436,6 +436,9 @@ namespace fw
 		g_PathHeap.PopHead();
 		const fwNaviCell& currCell= kMesh.CellBuffer[ cellIndex ];
 
+		//처리된건 여기에 넣어버리기.
+		closeList.insert( pair< int, fwPathNode>( topNode.kCurrentCell_Index ,topNode) ); 
+
 		for( int indexCnt= 0; indexCnt<3; indexCnt++ )
 		{
 			int neighborIndex = currCell.NeighborTri[ indexCnt ];
@@ -443,7 +446,7 @@ namespace fw
 			if( neighborIndex == -1 || cnt != 0 )  // 이웃이 있어야함.
 				continue;
 
-			const fwNaviCell& neighborCell = kMesh.CellBuffer[neighborIndex];
+			//const fwNaviCell& neighborCell = kMesh.CellBuffer[neighborIndex];
 			// 한번도 추가된적없는 요소를 오픈리스트에 넣어야함.
 
 
@@ -451,7 +454,7 @@ namespace fw
 			// 현재셀이 부모가 되고 이웃셀은 이때 현재셀이된다.
 			///float G_costFromParent = 0.0f;
 			float G_costFromStart =  topNode.costFromStart+ currCell.arrivalCost[ indexCnt ] ;//현재셀까지 누적된값 + 이웃셀 의코스트.
-			float H_costToGoal = ComputeHeuristic( neighborCell.center , endPos );
+			float H_costToGoal = ComputeHeuristic( currCell.edgeCenter[ indexCnt ] , endPos );//neighborCell.center 
 			fw::fwPathNode newNode( cellIndex , neighborIndex, G_costFromStart ,H_costToGoal );
 
 			g_PathHeap.AddPathNode( newNode ); // 여기서 추가된것체크를 한뒤에 추가가 된상태면 값만 갱신한다.
@@ -516,11 +519,30 @@ namespace fw
 4) 길따라가기 | 방법 >> 스택에서 하나씩 pop() 하면 된다.
 	*/
 
+	D3DXVECTOR3 findNeighborEdgeCenter( const fw::fwPathNode& tmpnode )
+	{
+		fw::fwNaviCell parentCell = fw::GetNaviMesh().CellBuffer[ tmpnode.kParentCell_Index ];
+		fw::fwNaviCell focusCell = fw::GetNaviMesh().CellBuffer[ tmpnode.kCurrentCell_Index ];
 
+		float fLastMin =  3.4E+38f;
+		D3DXVECTOR3 pos(0,0,0);
+		for( int n=0; n<3; n++)
+		{
+			D3DXVECTOR3 tmp= focusCell.edgeCenter[ n ] - parentCell.center;
+			float fMin = D3DXVec3Length( &tmp );
+			if( fMin < fLastMin )
+			{
+				pos = focusCell.edgeCenter[ n ];
+				fLastMin = fMin;
+			}
+		}	
+
+		return pos;
+	}
 	
 	// 이미 외부에서는 반직선 값만 넘겨주게 해야 될듯. 피킹으로 삼각형(셀) 인덱스를 찾아서 넘겨줬다. 
 	// 일단 pathList 는 최단거리 최적화는 하지않는다.
-	void FindWay( const int endCellIndex, const D3DXVECTOR3& end_pos, const int startCellIndex, const D3DXVECTOR3& start_pos, std::vector< D3DXVECTOR3> & pathList )
+	void FindWay( const int startCellIndex, const D3DXVECTOR3& start_pos, const int endCellIndex, const D3DXVECTOR3& end_pos , std::vector< D3DXVECTOR3> & pathList )
 	{
 		pathList.clear();
 		g_PathHeap.clear();
@@ -530,10 +552,11 @@ namespace fw
 		int  currCell = startCellIndex;
 		fwPathNode node( -1, startCellIndex, 0, ComputeHeuristic( start_pos, end_pos ) );
 		g_PathHeap.AddPathNode( node );
-		pathList.push_back( end_pos );				
+		
 		if( currCell == endCellIndex  )
 		{
 			pathList.push_back( start_pos );
+			pathList.push_back( end_pos );		
 		}
 		else
 		{
@@ -541,37 +564,44 @@ namespace fw
 			{
 				fwPathNode currentNode;
 				g_PathHeap.Top(currentNode);
-				if( currentNode.kCurrentCell_Index == endCellIndex )
+
+				if( currentNode.kCurrentCell_Index == endCellIndex ) //끝에서 부터 시작위치로 가는것이기에..
 					break;
 
-				closeList.insert( pair< int, fwPathNode>( currentNode.kCurrentCell_Index ,currentNode) ); // 미리 넣어도 무방.
-
 				FindSmallestHeuristicCell_AddOpenList( currentNode.kCurrentCell_Index, end_pos );
+
+
 				//
 			}
-
+			pathList.push_back( end_pos );
 			// 최종적으로 목적지에 닿았다면 그것이 top 이 될것이다.
 			// 그것의 부모노드를 차곡차곡 찾아가자.
 			fwPathNode node;
 			g_PathHeap.Top( node );
 			map<int,fwPathNode>::iterator it = closeList.begin();
-			if( closeList.count( node.kParentCell_Index ) != 0 )
+			if( closeList.count( node.kParentCell_Index ) == 0 )
 			{
-				fwPathNode tmpnode = closeList[ node.kParentCell_Index ];
-				while( tmpnode.kParentCell_Index != - 1 )
-				{//부모노드가 시작노드와 같을때까지 계속 찾기.시작노드만 부모가 -1 로 셋팅되있음.
-					
-					D3DXVECTOR3& pos = fw::GetNaviMesh().CellBuffer[ tmpnode.kCurrentCell_Index].center;
-					pathList.push_back( pos );
-					tmpnode = closeList[ tmpnode.kParentCell_Index];
-					
-				}
+				pathList.push_back( end_pos );
+				return;
+			}
+
+			while( node.kParentCell_Index != - 1 )
+			{//부모노드가 시작노드와 같을때까지 계속 찾기.시작노드만 부모가 -1 로 셋팅되있음.
+
+				// center 로 하면 문제가 있음. 직선거리가 되버림. edge 를 꼭 거쳐야함.
+				// 자신의 edge 중에서 부모의 중심과 가장 가까운 edge를 찾는다.
+				const D3DXVECTOR3& pos = findNeighborEdgeCenter( node );
+
+				pathList.push_back( pos );
+				node = closeList[ node.kParentCell_Index];
 
 			}
-			//g_PathHeap.top 
-			// 보간될 길을 모두 찾았으면 end_pos 가 최종위치임.
-		pathList.push_back( start_pos );
-			
+
+			//pathList.push_back(findNeighborEdgeCenter(tmpNode ));
+			// 보간될 길을 모두 찾았으면 start_pos 가 최종위치임.
+			pathList.push_back( start_pos );
+
+
 		}
 
 	}

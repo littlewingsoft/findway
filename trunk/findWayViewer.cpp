@@ -454,8 +454,18 @@ mNewViewport.MaxZ -= g_fViewportBias;
 		lpDev->SetViewport( &mNewViewport );
 
 	    lpDev->SetRenderState( D3DRS_LIGHTING, TRUE );
+
+		lpDev->SetRenderState(D3DRS_TEXTUREFACTOR , D3DCOLOR_ARGB(0x80,0xff,0xff, 0xff)); 
+		lpDev->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_TFACTOR); 
+		lpDev->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG2); 
+
+
 		lpDev->DrawIndexedPrimitiveUP( D3DPT_LINELIST, 0, posList.size(),   posList.size()-1, tmpIndex, D3DFMT_INDEX16,
 			(const void*)&(*(posList.begin())), sizeof( D3DXVECTOR3 ) );
+
+// 일반적인 텍스쳐 찍기로 되돌아 가려면.. 
+		lpDev->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_CURRENT); 
+		lpDev->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE); 
 
 		lpDev->SetViewport( &mViewport );
 	    lpDev->SetRenderState( D3DRS_LIGHTING, FALSE );

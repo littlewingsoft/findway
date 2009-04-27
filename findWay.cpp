@@ -61,6 +61,7 @@ namespace fw
 		{
 			fw::NaviMesh_Load( "tedefault.xml" );
 			//fw::NaviMesh_Load( "default.xml" );
+			//fw::NaviMesh_Load( "errordefault.xml" );
 			fw::AddMesh_FromXml( "agent.xml" );
 			fw::AddMesh_FromXml( "point.xml" );
 			fw::AddMesh_FromXml( "Sphere01.xml" );
@@ -528,7 +529,11 @@ namespace fw
 		D3DXVECTOR3 pos(0,0,0);
 		for( int n=0; n<3; n++)
 		{
-			D3DXVECTOR3 tmp= focusCell.edgeCenter[ n ] - parentCell.center;
+			if( focusCell.NeighborTri[n] == -1 )
+				continue;
+
+			//edge 데이터가 잘몬되었다.
+			D3DXVECTOR3 tmp= parentCell.center - focusCell.edgeCenter[ n ] ; 
 			float fMin = D3DXVec3Length( &tmp );
 			if( fMin < fLastMin )
 			{
@@ -573,9 +578,11 @@ namespace fw
 
 				//
 			}
-			pathList.push_back( end_pos );
+
 			// 최종적으로 목적지에 닿았다면 그것이 top 이 될것이다.
 			// 그것의 부모노드를 차곡차곡 찾아가자.
+
+			pathList.push_back( end_pos );
 			fwPathNode node;
 			g_PathHeap.Top( node );
 			map<int,fwPathNode>::iterator it = closeList.begin();

@@ -65,7 +65,7 @@ VS_OUTPUT RenderSceneVS( float4 vPos : POSITION,
     // Calc diffuse color    
     Output.Diffuse.rgb = g_MaterialDiffuseColor * g_LightDiffuse * max(0,dot(vNormalWorldSpace, g_LightDir)) + 
                          g_MaterialAmbientColor;   
-    Output.Diffuse.a = 1.0f; 
+    Output.Diffuse.a = 0.2f; 
     
     // Just copy the texture coordinate through
     Output.TextureUV = vTexCoord0; 

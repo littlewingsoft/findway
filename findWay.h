@@ -2,7 +2,17 @@
 
 #include <algorithm>
 #include <list>
+#include <set>
 #include <vector>
+
+
+#define PROF_BEGIN() DWORD prof_begin=timeGetTime(); 
+#define PROF_END() \
+			DWORD prof_end = timeGetTime() - prof_begin;\
+		std::basic_ostringstream<wchar_t> ostrm;\
+		ostrm << "[profile] : " << prof_end << "mSec\n" ;\
+		std::wstring strCalcTime = ostrm.str();\
+		OutputDebugString( strCalcTime.c_str() );\
 
 /*
 	단순한 구조의 씬그라프를 표현하기 위하여
@@ -70,13 +80,19 @@ namespace fw
 	};
 
 
+	struct fwNeighborCell
+	{
+		int NeighborIndex; 
+		D3DXVECTOR3 edgeCenter; //ab - bc- ca 순
+		float		arrivalCost;//삼각형중심에서 각ab, bc,ca 순으로 중심까지 거리값. 	
+	};
+
 	// 길찾기에 쓰일 재료. 미리 익스포터에서 preCalculation 해놓는다. 
+	// 자신의 중점과 이웃셀의 정보를 모두 담아놓음.
 	struct fwNaviCell
 	{
 		D3DXVECTOR3 center;
-		int NeighborTri[3]; //ab,bc,ca 변을 공유하는 순.
-		D3DXVECTOR3 edgeCenter[3]; //ab - bc- ca 순
-		float		arrivalCost[3];//삼각형중심에서 각ab, bc,ca 순으로 중심까지 거리값. 
+		fwNeighborCell neighbor[3]; //ab,bc,ca 변을 공유하는 순.
 	};
 
 	//시작점과 목표점에대하여 최종 가중치를 저장하고 
@@ -89,18 +105,22 @@ namespace fw
 		// 현재 가르키는 셀
 		int kCurrentCell_Index; 
 
-		
+		// fwNaviCell.edgeCenter 의 인덱스값. 자신의 이웃과 공유하는 edge 의 인덱스. 
+		// 자식은 부모를 알고 있다. 자신의 부모가 결정될때 셋팅될값. 길찾기 할때마다 계속 바뀔것임.
+		int kNeighborEdgeIndex; 
+
 		//a* 에선 G 로 불리운다. 말그대로 시작지부터 현재 셀 까지 누적이동값
 		float	costFromStart; 
 
 		//a* 에선 H로 통용된다. 말그대로 목적지까지의 값. 묻지도 말고 따지지도 말고 목적지와 가중치 계산함.
 		float	costToGoal;	   
 
-		fwPathNode(): kParentCell_Index (-1),kCurrentCell_Index(-1),costFromStart(0.0f),costToGoal(0.0f){}
-		fwPathNode( int _kParentCell_Index, int _cellIndex, float _costFromStart,float _costToGoal )
+		fwPathNode(): kParentCell_Index (-1),kCurrentCell_Index(-1), kNeighborEdgeIndex(-1), costFromStart(0.0f),costToGoal(0.0f){}
+		fwPathNode( int _kParentCell_Index, int _cellIndex, int _kNeighborEdgeIndex, float _costFromStart,float _costToGoal )
 		{
 			kParentCell_Index = _kParentCell_Index;
 			kCurrentCell_Index= _cellIndex ;
+			kNeighborEdgeIndex = _kNeighborEdgeIndex ;
 			costFromStart = _costFromStart;
 			costToGoal = _costToGoal;
 		}
@@ -124,27 +144,35 @@ namespace fw
 		float GetTotalCost()const { return costToGoal+costFromStart; }
 	};
 
-	
+#define USECHECKMAP 0
+
 	class fwPathHeap
 	{
 		typedef std::vector<fwPathNode> container;
 		container	m_OpenList;
 	
+#if USECHECKMAP == 1
+		typedef std::set<int, std::greater<int> > cont_checkMap; // 단지 있는지 여부만 찾아서 검색용도.
+		cont_checkMap checkMap;
+#endif
+
 	public:
 		fwPathHeap()
 		{
 			m_OpenList.clear();
+#if USECHECKMAP == 1
+			checkMap.clear();
+#endif
 		}
 
-		bool Top( fwPathNode& node )
+		bool Top( fwPathNode& node ) 
 		{
 			if( m_OpenList.empty() )
 			{
-				node = fwPathNode();
 				return false;
 			}
-			container::iterator it = m_OpenList.begin();
-			node = *it;
+
+			node= m_OpenList.front();
 			return true;
 		}
 		
@@ -153,6 +181,9 @@ namespace fw
 			if( m_OpenList.empty() )
 				return false;
 
+#if USECHECKMAP == 1
+			return checkMap.count( cellIndex ) > 0 ;
+#else
 			container::iterator it = m_OpenList.begin();
 			
 			while( it != m_OpenList.end()  )
@@ -164,15 +195,24 @@ namespace fw
 			}
 
 			return false;
+#endif
 		}
 		void PopHead()
 		{
-			if( m_OpenList.empty() == false )
-			m_OpenList.erase( m_OpenList.begin() );
+			std::pop_heap( m_OpenList.begin(), m_OpenList.end(), std::greater<fwPathNode>() );
+
+#if USECHECKMAP == 1
+			checkMap.erase(  (*(m_OpenList.end()-1)).kCurrentCell_Index );
+#endif
+			m_OpenList.pop_back();
+
 		}
 
 		void clear()
 		{
+#if USECHECKMAP == 1
+			checkMap.clear();
+#endif
 			m_OpenList.clear();
 		}
 
@@ -185,10 +225,7 @@ namespace fw
 		{
 			// 노드가 이미 있으면 집어넣지 않아.
 			// 다만 코스트가 더 적으면 그것을 적용시킴.
-			if( IsInHeap( node.kCurrentCell_Index ) == false )
-			{
-				m_OpenList.push_back( node );
-			}else
+			if( IsInHeap( node.kCurrentCell_Index ) )
 			{
 				container::iterator it = m_OpenList.begin();
 
@@ -198,14 +235,28 @@ namespace fw
 					if( tmpNode.kCurrentCell_Index == node.kCurrentCell_Index )
 					{
 						if( tmpNode.GetTotalCost() > node.GetTotalCost() )
-						tmpNode= node;
+							tmpNode= node;
 						break;
 					}
 					it++;
 				}
+				// 정렬 하던가 해야함.
+				std::make_heap( m_OpenList.begin(), m_OpenList.end() , std::greater<fwPathNode>() );
+
+#if USECHECKMAP == 1
+				checkMap.insert( node.kCurrentCell_Index );
+#endif
+			}
+			else
+			{
+				m_OpenList.push_back( node );
+				std::push_heap( m_OpenList.begin(), m_OpenList.end(), std::greater<fwPathNode>() );
+#if USECHECKMAP == 1
+checkMap.insert( node.kCurrentCell_Index );
+#endif
 			}
 
-			std::sort( m_OpenList.begin(), m_OpenList.end() );			
+			//std::sort( m_OpenList.begin(), m_OpenList.end() );			
 			
 		}
 	};
@@ -246,6 +297,8 @@ namespace fw
 	const fwMesh & GetMesh_const(const std::string & name );
 	fwMesh& GetMesh(const std::string & name )  ;
 	
+	const fwMesh& GetNaviMesh();
+
 	// 시작위치와 끝위치를 넣으면 pathList 가 나온다.
 	// 만일 시간이오래 걸리면 비동기 처리를 해야 하려나.
 	// 일단은 매우 최대한 간단하고 simple 하게 유지함.

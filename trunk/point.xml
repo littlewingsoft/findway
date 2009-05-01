@@ -10,18 +10,18 @@
 		</Info>
 		<Object ID="0" Name="point" Class="Editable_mesh">
 			<LocalTM>
-				<Value>[0.0573266,0.0,0.0,0.0]</Value>
-				<Value>[0.0,0.0573266,0.0,0.0]</Value>
-				<Value>[0.0,0.0,0.0573266,0.0]</Value>
+				<Value>[1.0,0.0,0.0,0.0]</Value>
+				<Value>[0.0,1.0,0.0,0.0]</Value>
+				<Value>[0.0,0.0,1.0,0.0]</Value>
 				<Value>[0.0,0.0,-2.53432e-005,1.0]</Value>
 			</LocalTM>
 			<Vertex>
-				<Value Index="0">[0,1.52588e-005,-3.27834e-006]</Value>
-				<Value Index="1">[-50,150,-50]</Value>
-				<Value Index="2">[50,150,-50]</Value>
-				<Value Index="3">[50,150,50]</Value>
-				<Value Index="4">[-50,150,50]</Value>
-				<Value Index="5">[0,150,-3.27834e-006]</Value>
+				<Value Index="0">[0,1.52673e-006,-3.28018e-007]</Value>
+				<Value Index="1">[-5.00279,15.0084,-5.00279]</Value>
+				<Value Index="2">[5.00279,15.0084,-5.00279]</Value>
+				<Value Index="3">[5.00279,15.0084,5.00279]</Value>
+				<Value Index="4">[-5.00279,15.0084,5.00279]</Value>
+				<Value Index="5">[0,15.0084,-3.28018e-007]</Value>
 			</Vertex>
 			<TriIndex>
 				<Value Index="0">[2,0,1]</Value>
@@ -33,6 +33,6 @@
 				<Value Index="6">[4,3,5]</Value>
 				<Value Index="7">[1,4,5]</Value>
 			</TriIndex>
-			<WIRECOLOR>135, 59, 8</WIRECOLOR>
+			<WIRECOLOR>88, 144, 225</WIRECOLOR>
 		</Object>
 	</Body>

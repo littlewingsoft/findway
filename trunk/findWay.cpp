@@ -115,6 +115,21 @@ namespace fw
 			}
 		}
 
+		// 광원위한 노멀 계산.
+		{ 
+			int n=0;
+			TiXmlNode* pkParent = pkElem->FirstChild( "VertexNormal" );
+			TiXmlElement* pkPosElem = pkParent ->FirstChildElement();
+			while( pkPosElem )
+			{
+				const char* value = pkPosElem->GetText();
+				float x=0.0f,y=0.0f,z=0.0f;
+				sscanf_s( value, "[%f,%f,%f]", &x,&y,&z );
+				mesh.VtxBuffer[ n ].norm = D3DXVECTOR3( x,y,z );
+				pkPosElem= pkPosElem->NextSiblingElement();
+				n++;
+			}
+		}
 
 
 		{
@@ -568,11 +583,11 @@ namespace fw
 		return pos;
 	}
 
-	void buildPath( const int endCellIndex,  const D3DXVECTOR3& start_pos, const D3DXVECTOR3& end_pos , std::vector< D3DXVECTOR3> & pathList )
+	void buildPath( const int endCellIndex,  const D3DXVECTOR3& start_pos, const D3DXVECTOR3& end_pos , std::vector< D3DXVECTOR3> & g_pathList )
 	{
 		// 최종적으로 목적지에 닿았다면 그것이 top 이 될것이다.
 		// 그것의 부모노드를 차곡차곡 찾아가자.
-		pathList.push_back( end_pos );
+		g_pathList.push_back( end_pos );
 
 		if( visitedNodeList.empty() || visitedNodeList.count( endCellIndex ) == 0 )
 			return;
@@ -586,42 +601,42 @@ namespace fw
 			// 자신의 edge 중에서 부모의 중심과 가장 가까운 edge를 찾는다.
 
 			const D3DXVECTOR3& pos = findNeighborEdgeCenter( node );
-			pathList.push_back( pos );
+			g_pathList.push_back( pos );
 
 			node = visitedNodeList[ node.kParentCell_Index];
 
 		}
 
 		// 보간될 길을 모두 찾았으면 start_pos 가 최종위치임.
-		pathList.push_back( start_pos );
+		g_pathList.push_back( start_pos );
 
 	}
 
 	// 이미 외부에서는 반직선 값만 넘겨주게 해야 될듯. 피킹으로 삼각형(셀) 인덱스를 찾아서 넘겨줬다. 
-	// 일단 pathList 는 최단거리 최적화는 하지않는다.
-	void FindWay( const int startCellIndex, const D3DXVECTOR3& start_pos, const int endCellIndex, const D3DXVECTOR3& end_pos , std::vector< D3DXVECTOR3> & pathList )
+	// 일단 g_pathList 는 최단거리 최적화는 하지않는다.
+	void FindWay( const int _startCellIndex, const D3DXVECTOR3& _start_pos, const int _endCellIndex, const D3DXVECTOR3& _end_pos , std::vector< D3DXVECTOR3> & g_pathList )
 	{
-		
-		pathList.clear();
+		int startCellIndex =_endCellIndex;
+		const D3DXVECTOR3& start_pos= _end_pos;
+		const int endCellIndex = _startCellIndex;
+		const D3DXVECTOR3& end_pos =   _start_pos;
+
+		g_pathList.clear();
 		g_PathHeap.clear();
 		visitedNodeList.clear();
-	
-
 
 		// 새로운 이웃셀을 체크할때 여기에 있는지 체크해본뒤 있다면 건너뜀.
 		int  currCell = startCellIndex;
 		fwPathNode node( -1, startCellIndex, 0, -1, ComputeHeuristic( start_pos, end_pos ) );
 		g_PathHeap.AddPathNode( node );
-		
+
 		if( currCell == endCellIndex  )
 		{
-			pathList.push_back( start_pos);
-			pathList.push_back( end_pos );		
+			g_pathList.push_back( start_pos);
+			g_pathList.push_back( end_pos );		
 		}
 		else
 		{
-
-//			DWORD accumTime = 0;
 			while( g_PathHeap.empty() == false  )
 			{
 				fwPathNode currentNode;
@@ -637,14 +652,10 @@ namespace fw
 				FindSmallestHeuristicCell_AddOpenList( currentNode, end_pos );
 
 				//PROF_END();
-
 			}
 
-
-			buildPath( endCellIndex, start_pos, end_pos, pathList );
-
+			buildPath( endCellIndex, start_pos, end_pos, g_pathList );
 		}
-
 	}
 
 
@@ -653,7 +664,7 @@ namespace fw
 		   
 		 2. foreach( FocusCell is not EndCell  )
 		    {
-				line = FocusCell.Center - NextPathCell.Center
+				line = FocusCell.Path? - NextPathCell.Center
 
 				통과된 edge = line 이 통과하는 Edge 가 FocusCell'의 3개의 edge중 검색.
 				if(  )
@@ -662,21 +673,21 @@ namespace fw
 
 	*/
 	
-	//
-	// Focus 셀이 다음 셀과 이웃하는 라인이 아닌 
+
+	
 	void optimizePath( const int endCellIndex, const D3DXVECTOR3& end_pos, 
-				const int startCellIndex, const D3DXVECTOR3& start_pos, std::vector< D3DXVECTOR3> & pathList )
+				const int startCellIndex, const D3DXVECTOR3& start_pos, std::vector< D3DXVECTOR3> & g_pathList )
 	{
 
 	}
 
 
-	// 시작위치와 끝위치를 넣으면 pathList 가 나온다.
+	// 시작위치와 끝위치를 넣으면 g_pathList 가 나온다.
 	// 만일 시간이오래 걸리면 비동기 처리를 해야 하려나.
 	// 일단은 매우 최대한 간단하고 simple 하게 유지함.
-	void FindWay( const D3DXVECTOR3& start_pos, const D3DXVECTOR3& end_pos, std::vector< D3DXVECTOR3> & pathList )
+	void FindWay( const D3DXVECTOR3& start_pos, const D3DXVECTOR3& end_pos, std::vector< D3DXVECTOR3> & g_pathList )
 	{
-		pathList.clear();
+		g_pathList.clear();
 
 		//for( size_t n=0; n< fw::GetNaviMesh().TriBuffer.size(); n++)
 		//{

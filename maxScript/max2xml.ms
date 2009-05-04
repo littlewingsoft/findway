@@ -900,7 +900,15 @@ struct ZExport
 				XMLElementBegin (nTabCount) "FAR" false
 					format "[%]" obj.farclip  to:m_fileTarget
 				XMLElementEnd 0 "FAR"		
-			)	
+			)
+			else if classOf obj == Omnilight then
+			(
+				
+				XMLElementBegin (nTabCount) "rgb" false
+					format "[%]" obj.rgb  to:m_fileTarget
+				XMLElementEnd 0 "rgb"
+
+			)
 			
 	),
 	/*
@@ -1434,6 +1442,26 @@ retEdge = EdgeIndex -1 -1 -1
 		TriEdgeList[ srcTriIndex ]
 	),
 
+fn GetNeighborFaceUsingVtx obj faceIndex vtxIndexA vtxIndexB =
+(
+	-- 1. 두개의 버텍스를 사용하는 공유 엣지를 찾아냄.
+	-- 2. 그 엣지를 사용하는 Face 들을 찾아냄
+	-- 3. Face 의 Index 들을 알아낸뒤 인자로 들어온 faceIndex 와 다른 인덱스가 바로 원하는 
+	--    최종 이웃 Face의 인덱스임.
+	
+	edgeArr = meshop.getEdgesUsingVert obj #{vtxIndexA}
+	edgeArr = edgeArr * meshop.getEdgesUsingVert obj #{vtxIndexB}	
+	faceArr = meshop.getFacesUsingEdge obj edgeArr
+	
+	retArr=#()
+	for n = 1 to faceArr.count do
+		if faceArr[n]==true  and n != faceIndex then
+		(
+			return (n-1) -- 게임에서 쓰려면 0 base 로 바꿔야 해서..
+		)	
+
+	-1 --못찾은 것임.
+),
 	
 	fn WriteCell obj nTabCount =
 	(
@@ -1456,10 +1484,10 @@ retEdge = EdgeIndex -1 -1 -1
 		-- < NaviCell >
 				
 		if classOf obj != Editable_mesh then return undefined
-		bret = matchPattern obj.name  pattern:"navi_*"
+		bret = matchPattern obj.name  pattern:"navimesh*"
 		if bret == false then return undefined -- navi 가 접두로 붙었는지 체크함. navi가 붙어야 진정한 맵이다.
 			
-		preCalcNeighbor(  obj ) 
+		--preCalcNeighbor(  obj ) 
 		StackClearAttr()
 		XMLElementBegin nTabCount "NaviCell" true --g_strTriIndex 
 		
@@ -1473,8 +1501,8 @@ retEdge = EdgeIndex -1 -1 -1
 				StackPushAttr "TriIndex" ( i-1 ) --index
 				
 				triCenter = GetCenterPos obj i 
-				StackPushAttr "Center" ( triCenter ) --index
-				StackPushAttr "Neighbor" ( GetNeighbor i  ) --index
+				StackPushAttr "Center"  (m_oUtil.ConvertToD3D_POS triCenter )--index
+				--StackPushAttr "Neighbor" ( GetNeighbor i  ) --index
 				
 				XMLElementBegin (nTabCount+1) g_strValue true
 				outIndex = m_oUtil.ConvertToD3D_INDEX (getFace obj i )
@@ -1491,30 +1519,30 @@ retEdge = EdgeIndex -1 -1 -1
 				tmpA = (outIndex.x as integer) + 1 -- max 용으로 임시 변경 
 				tmpB = (outIndex.y as integer) + 1 
 				tmpC = (outIndex.z as integer) + 1
-
-				vtxA  =(GetLocalVtx obj tmpA)
-				vtxB =(GetLocalVtx obj tmpB)
-				vtxC = (GetLocalVtx obj tmpC )
-								
-				
+			
+			
+				neighbor = GetNeighborFaceUsingVtx obj i tmpA tmpB
 				center_ab = GetCenter_Edge (GetLocalVtx obj tmpA )  (GetLocalVtx obj tmpB)   
 				-- edge 의 center 이고 삼각형의 center 와의 거리를 계산해야 한다.
 				arrivalCost = distance center_ab triCenter
-				format "%<AB>% ( % ) </AB>\n"  (tab) (center_ab) (arrivalCost)  to:m_fileTarget
+				format "%<AB NeighborFaceIndex=\"%\">% ( % ) </AB>\n"  (tab)  (neighbor  )( m_oUtil.ConvertToD3D_POS(center_ab) ) (arrivalCost)  to:m_fileTarget
 				
+				
+				neighbor = GetNeighborFaceUsingVtx obj i tmpB tmpC
 				center_bc = GetCenter_Edge (GetLocalVtx obj tmpB )  (GetLocalVtx obj tmpC) 
 				arrivalCost = distance center_bc triCenter
-				format "%<BC>% ( % ) </BC>\n"  (tab) (center_bc) (arrivalCost)	to:m_fileTarget
+				format "%<BC NeighborFaceIndex=\"%\">% ( % ) </BC>\n"  (tab)  (neighbor)(m_oUtil.ConvertToD3D_POS(center_bc)) (arrivalCost)	to:m_fileTarget
 
+				neighbor = GetNeighborFaceUsingVtx obj i tmpC tmpA
 				center_ca = GetCenter_Edge (GetLocalVtx obj tmpC )  (GetLocalVtx obj tmpA) 
 				arrivalCost = distance center_ca triCenter
-				format "%<CA>% ( % ) </CA>\n"  (tab) (center_ca) (arrivalCost)	to:m_fileTarget				
+				format "%<CA NeighborFaceIndex=\"%\">% ( % ) </CA>\n"  (tab)  (neighbor ) (m_oUtil.ConvertToD3D_POS(center_ca)) (arrivalCost)	to:m_fileTarget				
 
 				XMLElementEnd (nTabCount+2) "EdgeCenter"
 				
 				XMLElementEnd (nTabCount+1) g_strValue
 				
-
+			g_uiProgress.value = 100.*i/obj.faces.count
 			)
 
 		XMLElementEnd nTabCount "NaviCell"  --g_strTriIndex
@@ -1544,7 +1572,7 @@ retEdge = EdgeIndex -1 -1 -1
 			WriteMaxObject obj ( nTabCount + 1 )
 			--WriteBoundingBox obj (nTabCount+1)
 			WriteTriVertex obj (nTabCount+1)
-			--WriteVertexNormal obj (nTabCount+1)
+			WriteVertexNormal obj (nTabCount+1)
 			WriteTriIndex obj (nTabCount+1)
 			WriteCell obj ( nTabCount + 1 )
 			WriteWireColor obj ( nTabCount + 1 )
@@ -1604,7 +1632,7 @@ retEdge = EdgeIndex -1 -1 -1
 
 rollout ui "Properties" width:397 height:431
 (
-	local strFilename = "default.xml"
+	local strFilename ="default.xml"
 	
 	checkbox chkObjectIDWithName "Object ID와 Obejct Name함께 출력" pos:[20,23] width:327 height:17
 	GroupBox grp3 "출력형식" pos:[8,8] width:370 height:124
@@ -1632,7 +1660,13 @@ rollout ui "Properties" width:397 height:431
 	)
 	on btnPathName pressed do
 	(
-	    temp = getSaveFileName filename:strFilename types:"XML(*.xml)|*.xml|All|*.*|"
+		strFilename = maxfilename 
+		if maxfilename =="" then
+			strFilename = "untitled.xml" -- 0번째 오브젝트. 그래도 없다면 노타이틀
+		else
+		    ret = substituteString strFilename ".max" ".xml"
+		
+	    temp = getSaveFileName filename:ret types:"XML(*.xml)|*.xml|All|*.*|"
 	    if temp != undefined then editPathName.text = temp
 	)
 	on btnRun pressed do

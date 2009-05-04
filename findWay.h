@@ -69,6 +69,7 @@ namespace fw
 	struct Vertex // d3d 좌표계 기준. 화면 출력용. 디버그 용도 이외에는 쓰이지 않음.
 	{
 		D3DXVECTOR3 pos;
+		D3DXVECTOR3 norm;
 		DWORD	Color;
 	};
 
@@ -299,11 +300,11 @@ checkMap.insert( node.kCurrentCell_Index );
 	
 	const fwMesh& GetNaviMesh();
 
-	// 시작위치와 끝위치를 넣으면 pathList 가 나온다.
+	// 시작위치와 끝위치를 넣으면 g_pathList 가 나온다.
 	// 만일 시간이오래 걸리면 비동기 처리를 해야 하려나.
 	// 일단은 매우 최대한 간단하고 simple 하게 유지함.
-	void FindWay( const D3DXVECTOR3& start_pos, const D3DXVECTOR3& end_pos, std::vector< D3DXVECTOR3> & pathList );
+	void FindWay( const D3DXVECTOR3& start_pos, const D3DXVECTOR3& end_pos, std::vector< D3DXVECTOR3> & g_pathList );
 
-	void FindWay( const int endTriIndex, const D3DXVECTOR3& end_pos, const int startTriIndex, const D3DXVECTOR3& start_pos, std::vector< D3DXVECTOR3> & pathList );
+	void FindWay( const int endTriIndex, const D3DXVECTOR3& end_pos, const int startTriIndex, const D3DXVECTOR3& start_pos, std::vector< D3DXVECTOR3> & g_pathList );
 
 };

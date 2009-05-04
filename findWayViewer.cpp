@@ -35,8 +35,7 @@ std::wstring g_strCalcTime = L"n mSec";
 std::wstring g_stNeighBorIndex[3]={ L"-1" , L"-1", L"-1"};
 
 
-std::vector<D3DXVECTOR3> pathList;
-int	g_nCurrentCellIndex = -1;
+
 //#define DEBUG_VS   // Uncomment this line to debug D3D9 vertex shaders 
 //#define DEBUG_PS   // Uncomment this line to debug D3D9 pixel shaders 
 
@@ -68,6 +67,19 @@ ID3DXEffect*            g_pEffect9 = NULL;
 
 
 //--------------------------------------------------------------------------------------
+// agent
+//--------------------------------------------------------------------------------------
+#define agent_state_stop 0x01
+#define agent_state_move 0x02
+#define agent_speed 0.15f
+int		g_AgentState = agent_state_stop;
+int		g_nCurrentPathIndex;
+
+static std::list<PickInfo> pickList;
+std::vector<D3DXVECTOR3> g_pathList;
+int	g_nCurrentCellIndex = -1;
+
+//--------------------------------------------------------------------------------------
 // Forward declarations 
 //--------------------------------------------------------------------------------------
 LRESULT CALLBACK MsgProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bool* pbNoFurtherProcessing, void* pUserContext );
@@ -86,7 +98,7 @@ void    CALLBACK OnD3D9DestroyDevice( void* pUserContext );
 void    InitApp();
 void    RenderText();
 
-void RenderMesh( LPDIRECT3DDEVICE9 lpDev, const fw::fwMesh& mesh, DWORD argb=0xffffffff );
+void RenderMesh( LPDIRECT3DDEVICE9 lpDev, const fw::fwMesh& mesh, D3DCOLOR argb=D3DCOLOR_ARGB(0xff,0xff,0xff,0xff) , bool bDrawEdge = true);
 
 
 //--------------------------------------------------------------------------------------
@@ -403,7 +415,6 @@ HRESULT CALLBACK OnD3D9ResetDevice( IDirect3DDevice9* pd3dDevice,
     g_SampleUI.SetSize( 170, 300 );
 
 
-
     return S_OK;
 }
 
@@ -425,7 +436,8 @@ D3DVIEWPORT9 mNewViewport; // 새로운 뷰포트 데이터 저장
 // Intel (R) Integrated Graphics 를 위해 동작한다, 
 
 // 그러나 그것은 16의 배수라면 어떤 것이라도 상관없다.
-float g_fViewportBias = 0.0000152588f;
+float g_fViewportBias   = 0.00000152588f;
+//float g_fViewportBias = 0.0000152588f;
 
 // 투영 행렬이 적용된다.
 // 뷰 행렬이 적용된다.
@@ -561,16 +573,15 @@ mNewViewport.MaxZ -= g_fViewportBias;
 
 
 
-	void RenderMesh( LPDIRECT3DDEVICE9 lpDev, const fw::fwMesh& mesh, DWORD argb )
+	void RenderMesh( LPDIRECT3DDEVICE9 lpDev, const fw::fwMesh& mesh, DWORD argb , bool bDrawEdge)
 	{
-
 		float fZSlopeScale = -0.5f;
 		float fDepthBias   = 0.0f;
 		//D3DXMATRIXA16 matWorld;
 		//D3DXMatrixIdentity( &matWorld );
 		lpDev->SetTransform( D3DTS_WORLD, &mesh.LocalMat );
 
-		lpDev->SetFVF( D3DFVF_XYZ | D3DFVF_DIFFUSE);//
+		lpDev->SetFVF( D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_DIFFUSE);//
 
 		int TriCnt = mesh.TriBuffer.size();
 		int vtxCnt = mesh.VtxBuffer.size();
@@ -582,7 +593,7 @@ mNewViewport.MaxZ -= g_fViewportBias;
 		lpDev->SetRenderState( D3DRS_ZENABLE, 1 );
 		lpDev->SetRenderState( D3DRS_ZWRITEENABLE, 1 );
 		lpDev->SetRenderState( D3DRS_CULLMODE, D3DCULL_NONE );
-		lpDev->SetRenderState( D3DRS_LIGHTING, FALSE );
+		lpDev->SetRenderState( D3DRS_LIGHTING, TRUE );
 		lpDev->SetRenderState( D3DRS_FILLMODE, D3DFILL_SOLID );
 
 		lpDev->SetRenderState( D3DRS_ALPHABLENDENABLE, TRUE );
@@ -590,11 +601,6 @@ mNewViewport.MaxZ -= g_fViewportBias;
 		lpDev->SetRenderState( D3DRS_DESTBLEND,D3DBLEND_INVSRCALPHA ); //  
 
 		lpDev->SetRenderState(D3DRS_TEXTUREFACTOR , argb ); //D3DCOLOR_ARGB( 0x3f,0xff,0xff, 0xff)
-
-		//DWORD dw = 0;
-		//lpDev->GetTextureStageState( 0, D3DTSS_COLOROP, &dw );
-		//lpDev->GetTextureStageState( 0, D3DTSS_COLORARG1, &dw );
-		//lpDev->GetTextureStageState( 0, D3DTSS_COLORARG2, &dw );
 
 		lpDev->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_TFACTOR);    
 		lpDev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG2);
@@ -615,15 +621,20 @@ mNewViewport.MaxZ -= g_fViewportBias;
 		lpDev->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_CURRENT); //D3DTA_CURRENT
 		
 
-		// Turn on depth bias
-		lpDev->SetRenderState( D3DRS_SLOPESCALEDEPTHBIAS, F2DW(fZSlopeScale) );
-		lpDev->SetRenderState( D3DRS_DEPTHBIAS, F2DW(fDepthBias) );
+		if( bDrawEdge )
+		{
+			// Turn on depth bias
+			lpDev->SetRenderState( D3DRS_SLOPESCALEDEPTHBIAS, F2DW(fZSlopeScale) );
+			lpDev->SetRenderState( D3DRS_DEPTHBIAS, F2DW(fDepthBias) );
 
-		lpDev->SetRenderState( D3DRS_CULLMODE, D3DCULL_CCW );
-		lpDev->SetRenderState( D3DRS_LIGHTING, TRUE );
-		lpDev->SetRenderState( D3DRS_FILLMODE, D3DFILL_WIREFRAME );
-		lpDev->DrawIndexedPrimitiveUP( D3DPT_TRIANGLELIST, 0,  vtxCnt, TriCnt, (const void*)&(*(mesh.TriBuffer.begin())), 
-			D3DFMT_INDEX16, (const void*)&(*(mesh.VtxBuffer.begin())), sizeof(fw::Vertex));//
+			lpDev->SetRenderState( D3DRS_LIGHTING, TRUE );
+			lpDev->SetRenderState( D3DRS_FILLMODE, D3DFILL_WIREFRAME );
+			lpDev->DrawIndexedPrimitiveUP( D3DPT_TRIANGLELIST, 0,  vtxCnt, TriCnt, (const void*)&(*(mesh.TriBuffer.begin())), 
+				D3DFMT_INDEX16, (const void*)&(*(mesh.VtxBuffer.begin())), sizeof(fw::Vertex));//
+
+			lpDev->SetRenderState( D3DRS_LIGHTING, FALSE );
+			lpDev->SetRenderState( D3DRS_FILLMODE, D3DFILL_SOLID );
+		}
 
 	}
 
@@ -646,38 +657,32 @@ HRESULT OnRenderPrimitive(IDirect3DDevice9* lpDev, double fTime, float fElapsedT
 {
 	RenderMesh( lpDev, fw::GetNaviMesh() );
 
-		//pathList.clear();
-		//pathList.push_back( D3DXVECTOR3( 6,0,0 ) );
-		//pathList.push_back( D3DXVECTOR3( 2,0,0 ) );
-		//pathList.push_back( D3DXVECTOR3( -2,0,0 ) );
-		//Render_Line(pd3dDevice,pathList  );
-
 	try
 	{
-		if( pathList.empty() == false )
+		if( g_pathList.empty() == false )
 		{
-			fw::GetMesh("point").LocalMat._41 = pathList[0].x;
-			fw::GetMesh("point").LocalMat._42 = pathList[0].y;
-			fw::GetMesh("point").LocalMat._43 = pathList[0].z;
+			fw::GetMesh("point").LocalMat._41 = g_pathList[0].x;
+			fw::GetMesh("point").LocalMat._42 = g_pathList[0].y;
+			fw::GetMesh("point").LocalMat._43 = g_pathList[0].z;
 
 
 			RenderMesh( lpDev, fw::GetMesh("point") );
 
-			fw::GetMesh("point").LocalMat._41 = pathList[pathList.size()-1].x;
-			fw::GetMesh("point").LocalMat._42 = pathList[pathList.size()-1].y;
-			fw::GetMesh("point").LocalMat._43 = pathList[pathList.size()-1].z;
+			fw::GetMesh("point").LocalMat._41 = g_pathList[g_pathList.size()-1].x;
+			fw::GetMesh("point").LocalMat._42 = g_pathList[g_pathList.size()-1].y;
+			fw::GetMesh("point").LocalMat._43 = g_pathList[g_pathList.size()-1].z;
 			RenderMesh( lpDev, fw::GetMesh("point") );
 
-			for( size_t n=1; n< pathList.size()-1; n++)
+			for( size_t n=1; n< g_pathList.size()-1; n++)
 			{
-				fw::GetMesh("point").LocalMat._41 = pathList[n].x;
-				fw::GetMesh("point").LocalMat._42 = pathList[n].y;
-				fw::GetMesh("point").LocalMat._43 = pathList[n].z;
+				fw::GetMesh("point").LocalMat._41 = g_pathList[n].x;
+				fw::GetMesh("point").LocalMat._42 = g_pathList[n].y;
+				fw::GetMesh("point").LocalMat._43 = g_pathList[n].z;
 
 				fw::GetMesh("point").LocalMat._11 = 0.5f;
 				fw::GetMesh("point").LocalMat._22 = 0.5f;
 				fw::GetMesh("point").LocalMat._33 = 0.5f;
-				//D3DXMatrixTranslation( &fw::GetMesh("agent").LocalMat,  pathList[n].x, pathList[n].y, pathList[n].z );
+				//D3DXMatrixTranslation( &fw::GetMesh("agent").LocalMat,  g_pathList[n].x, g_pathList[n].y, g_pathList[n].z );
 
 				RenderMesh( lpDev, fw::GetMesh("point"), D3DCOLOR_ARGB(0x8f,0x0,0x0,0x0) );
 			}
@@ -685,7 +690,7 @@ HRESULT OnRenderPrimitive(IDirect3DDevice9* lpDev, double fTime, float fElapsedT
 				fw::GetMesh("point").LocalMat._11 = 1.0f;
 				fw::GetMesh("point").LocalMat._22 = 1.0f;
 				fw::GetMesh("point").LocalMat._33 = 1.0f;
-			Render_Line(lpDev, pathList );
+			Render_Line(lpDev, g_pathList );
 		}
 	}
 	catch( std::exception ex )
@@ -693,17 +698,32 @@ HRESULT OnRenderPrimitive(IDirect3DDevice9* lpDev, double fTime, float fElapsedT
 		__asm int 3;
 	}
 
-//	pd3dDevice->SetRenderState(D3DRS_TEXTUREFACTOR, D3DCOLOR_ARGB(0x80, 0xff,0xff,0xff) ); 
-//	pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, 1 );
-//	pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_TFACTOR );
-//	pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1 );
-///*	g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_TFACTOR);
-//	g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);*/	
-//
-//	pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, 0 );
-//	pd3dDevice->SetRenderState(D3DRS_TEXTUREFACTOR, 0xffffffff); 
+	
+	if( g_pathList.empty() ==false )
+	{
+		static float lerp = 0.0f;
+		lerp += agent_speed;
+		if( lerp >1.0f )
+		{
+			lerp = 0.0f;
 
-	DrawCellInfo();
+			if( g_pathList.empty() == false )
+				g_pathList.erase( g_pathList.begin() );
+		}
+
+		if( g_pathList.size() > 1 )
+		{
+		const D3DXVECTOR3& pos = g_pathList[0] + (( g_pathList[1]-g_pathList[0])* lerp ) ;
+
+		fw::GetMesh( "agent" ).LocalMat._41 = pos.x;
+		fw::GetMesh( "agent" ).LocalMat._42 = pos.y;
+		fw::GetMesh( "agent" ).LocalMat._43 = pos.z;
+		}
+	}
+
+		RenderMesh( lpDev, fw::GetMesh( "agent" ), 0xffffffff, false );
+
+	//DrawCellInfo();
 
 	return S_OK;
 }
@@ -916,7 +936,6 @@ void OnLButtonDown()
 
 	std::map<float, int> closeIndex;
 
-	static std::list<PickInfo> pickList;
 
 	g_stPickingTriIndex = L"None Picked ";
 	const fwMesh& naviMesh = fw::GetNaviMesh();
@@ -994,7 +1013,7 @@ void OnLButtonDown()
 
 
 		DWORD prof_begin = timeGetTime();
-		fw::FindWay( startCellIndex, start_pos, endCellIndex, end_pos, pathList );
+		fw::FindWay( startCellIndex, start_pos, endCellIndex, end_pos, g_pathList );
 		DWORD prof_end = timeGetTime() - prof_begin;
 		std::basic_ostringstream<wchar_t> ostrm;
 		ostrm << "[profile] : " << prof_end << "mSec" ;

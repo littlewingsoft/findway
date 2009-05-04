@@ -73,9 +73,8 @@ namespace fw
 	{
 		testCode()
 		{
-			//fw::NaviMesh_Load( "tedefault.xml" );
-			//fw::NaviMesh_Load( "default.xml" );
-			fw::NaviMesh_Load( "errordefault.xml" );
+			fw::NaviMesh_Load( "default.xml" );
+			//fw::NaviMesh_Load( "errordefault.xml" );
 			fw::AddMesh_FromXml( "agent.xml" );
 			fw::AddMesh_FromXml( "point.xml" );
 			fw::AddMesh_FromXml( "Sphere01.xml" );

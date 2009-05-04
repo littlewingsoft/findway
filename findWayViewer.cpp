@@ -71,11 +71,11 @@ ID3DXEffect*            g_pEffect9 = NULL;
 //--------------------------------------------------------------------------------------
 #define agent_state_stop 0x01
 #define agent_state_move 0x02
-#define agent_speed 0.15f
+#define agent_speed 0.015f
 int		g_AgentState = agent_state_stop;
 int		g_nCurrentPathIndex;
 
-static std::list<PickInfo> pickList;
+static std::vector<PickInfo> g_pickList;
 std::vector<D3DXVECTOR3> g_pathList;
 int	g_nCurrentCellIndex = -1;
 
@@ -98,7 +98,7 @@ void    CALLBACK OnD3D9DestroyDevice( void* pUserContext );
 void    InitApp();
 void    RenderText();
 
-void RenderMesh( LPDIRECT3DDEVICE9 lpDev, const fw::fwMesh& mesh, D3DCOLOR argb=D3DCOLOR_ARGB(0xff,0xff,0xff,0xff) , bool bDrawEdge = true);
+void RenderMesh( LPDIRECT3DDEVICE9 lpDev, const fw::fwMesh& mesh, bool bDrawEdge = false, D3DCOLOR argb=D3DCOLOR_ARGB(0xff,0xff,0xff,0xff) );
 
 
 //--------------------------------------------------------------------------------------
@@ -469,7 +469,7 @@ mNewViewport.MaxZ -= g_fViewportBias;
 		lpDev->SetFVF( D3DFVF_XYZ );//| D3DFVF_DIFFUSE 
 		lpDev->SetViewport( &mNewViewport );
 
-	    lpDev->SetRenderState( D3DRS_LIGHTING, TRUE );
+	    lpDev->SetRenderState( D3DRS_LIGHTING, FALSE );
 
 		lpDev->SetRenderState( D3DRS_ALPHABLENDENABLE, TRUE );
 		lpDev->SetRenderState( D3DRS_SRCBLEND, D3DBLEND_SRCALPHA ); //
@@ -569,12 +569,41 @@ mNewViewport.MaxZ -= g_fViewportBias;
 	}
 
 
+void SettingSunLight(LPDIRECT3DDEVICE9 lpDev)
+{
+
+	lpDev->SetRenderState( D3DRS_SHADEMODE, D3DSHADE_GOURAUD);//D3DSHADE_FLAT  D3DSHADE_PHONG
+	lpDev->SetRenderState( D3DRS_AMBIENT, D3DCOLOR_XRGB(0xff,0xff,0xff) );
+
+
+	// Fill in a light structure defining our light
+	D3DLIGHT9 light;
+	ZeroMemory( &light, sizeof(D3DLIGHT9) );
+	light.Type       = D3DLIGHT_DIRECTIONAL;
+	light.Diffuse.r  = 1.0f;
+	light.Diffuse.g  = 1.0f;
+	light.Diffuse.b  = 1.0f;
+	light.Diffuse.a  = 1.0f;
+	light.Range      = 10000.0f;
+
+	// Create a direction for our light - it must be normalized  
+	D3DXVECTOR3 vecDir;
+	vecDir = D3DXVECTOR3(0.0f,-1.0f,0.0);
+	D3DXVec3Normalize( (D3DXVECTOR3*)&light.Direction, &vecDir );
+
+	// Tell the device about the light and turn it on
+	lpDev->SetLight( 0, &light );
+	lpDev->LightEnable( 0, TRUE ); 
+
+}
 
 
 
 
-	void RenderMesh( LPDIRECT3DDEVICE9 lpDev, const fw::fwMesh& mesh, DWORD argb , bool bDrawEdge)
+
+	void RenderMesh( LPDIRECT3DDEVICE9 lpDev, const fw::fwMesh& mesh, bool bDrawEdge, DWORD argb )
 	{
+		SettingSunLight(lpDev);
 		float fZSlopeScale = -0.5f;
 		float fDepthBias   = 0.0f;
 		//D3DXMATRIXA16 matWorld;
@@ -623,17 +652,26 @@ mNewViewport.MaxZ -= g_fViewportBias;
 
 		if( bDrawEdge )
 		{
+
+			lpDev->SetRenderState(D3DRS_TEXTUREFACTOR ,  D3DCOLOR_ARGB( 0xff,0,0, 0) );
+			lpDev->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);    // D3DTA_CURRENT 
+			lpDev->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG2); 
+
 			// Turn on depth bias
 			lpDev->SetRenderState( D3DRS_SLOPESCALEDEPTHBIAS, F2DW(fZSlopeScale) );
 			lpDev->SetRenderState( D3DRS_DEPTHBIAS, F2DW(fDepthBias) );
 
-			lpDev->SetRenderState( D3DRS_LIGHTING, TRUE );
+//			lpDev->SetRenderState( D3DRS_LIGHTING, TRUE );
 			lpDev->SetRenderState( D3DRS_FILLMODE, D3DFILL_WIREFRAME );
 			lpDev->DrawIndexedPrimitiveUP( D3DPT_TRIANGLELIST, 0,  vtxCnt, TriCnt, (const void*)&(*(mesh.TriBuffer.begin())), 
 				D3DFMT_INDEX16, (const void*)&(*(mesh.VtxBuffer.begin())), sizeof(fw::Vertex));//
 
-			lpDev->SetRenderState( D3DRS_LIGHTING, FALSE );
+//			lpDev->SetRenderState( D3DRS_LIGHTING, FALSE );
 			lpDev->SetRenderState( D3DRS_FILLMODE, D3DFILL_SOLID );
+
+			lpDev->SetTextureStageState(0, D3DTSS_COLOROP,  D3DTOP_MODULATE ); 
+			lpDev->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE); //D3DTA_CURRENT
+			lpDev->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_CURRENT  ); //
 		}
 
 	}
@@ -655,7 +693,7 @@ void DrawCellInfo();
 
 HRESULT OnRenderPrimitive(IDirect3DDevice9* lpDev, double fTime, float fElapsedTime, void* pUserContext)
 {
-	RenderMesh( lpDev, fw::GetNaviMesh() );
+	RenderMesh( lpDev, fw::GetNaviMesh(),true );
 
 	try
 	{
@@ -673,19 +711,19 @@ HRESULT OnRenderPrimitive(IDirect3DDevice9* lpDev, double fTime, float fElapsedT
 			fw::GetMesh("point").LocalMat._43 = g_pathList[g_pathList.size()-1].z;
 			RenderMesh( lpDev, fw::GetMesh("point") );
 
-			for( size_t n=1; n< g_pathList.size()-1; n++)
-			{
-				fw::GetMesh("point").LocalMat._41 = g_pathList[n].x;
-				fw::GetMesh("point").LocalMat._42 = g_pathList[n].y;
-				fw::GetMesh("point").LocalMat._43 = g_pathList[n].z;
+			//for( size_t n=1; n< g_pathList.size()-1; n++)
+			//{
+			//	fw::GetMesh("point").LocalMat._41 = g_pathList[n].x;
+			//	fw::GetMesh("point").LocalMat._42 = g_pathList[n].y;
+			//	fw::GetMesh("point").LocalMat._43 = g_pathList[n].z;
 
-				fw::GetMesh("point").LocalMat._11 = 0.5f;
-				fw::GetMesh("point").LocalMat._22 = 0.5f;
-				fw::GetMesh("point").LocalMat._33 = 0.5f;
-				//D3DXMatrixTranslation( &fw::GetMesh("agent").LocalMat,  g_pathList[n].x, g_pathList[n].y, g_pathList[n].z );
+			//	fw::GetMesh("point").LocalMat._11 = 0.5f;
+			//	fw::GetMesh("point").LocalMat._22 = 0.5f;
+			//	fw::GetMesh("point").LocalMat._33 = 0.5f;
+			//	//D3DXMatrixTranslation( &fw::GetMesh("agent").LocalMat,  g_pathList[n].x, g_pathList[n].y, g_pathList[n].z );
 
-				RenderMesh( lpDev, fw::GetMesh("point"), D3DCOLOR_ARGB(0x8f,0x0,0x0,0x0) );
-			}
+			//	RenderMesh( lpDev, fw::GetMesh("point"), true, D3DCOLOR_ARGB(0x8f,0x0,0x0,0x0) );
+			//}
 
 				fw::GetMesh("point").LocalMat._11 = 1.0f;
 				fw::GetMesh("point").LocalMat._22 = 1.0f;
@@ -721,7 +759,7 @@ HRESULT OnRenderPrimitive(IDirect3DDevice9* lpDev, double fTime, float fElapsedT
 		}
 	}
 
-		RenderMesh( lpDev, fw::GetMesh( "agent" ), 0xffffffff, false );
+		RenderMesh( lpDev, fw::GetMesh( "agent" ) );
 
 	//DrawCellInfo();
 
@@ -990,7 +1028,7 @@ void OnLButtonDown()
 		PickInfo tmpInfo;
 		tmpInfo.cellIndex = Index;
 		tmpInfo.pos = pickPos;
-		pickList.push_back( tmpInfo );
+		g_pickList.push_back( tmpInfo );
 
 		fw::GetMesh("point").LocalMat._41 =pickPos.x;
 		fw::GetMesh("point").LocalMat._42 =pickPos.y;
@@ -998,19 +1036,21 @@ void OnLButtonDown()
 		//D3DXMatrixTranslation( &, pickPos.x, pickPos.y, pickPos.z );
 	}
 
-	if( pickList.size() >= 2 )
+	if( g_pickList.size() >= 2 )
 	{
-		std::list<PickInfo>::iterator it = pickList.end();
+		std::vector<PickInfo>::iterator it = g_pickList.end();
 		it--;
 		const PickInfo& tmpEndInfo = (*it);
 		int endCellIndex = tmpEndInfo.cellIndex;
 		D3DXVECTOR3 end_pos = tmpEndInfo.pos;
 
-		it = pickList.begin();
+		it = g_pickList.begin();
 		const PickInfo& tmpStartInfo = (*it);
 		int startCellIndex = tmpStartInfo.cellIndex;
 		D3DXVECTOR3 start_pos = tmpStartInfo.pos;
 
+
+		g_pathList.clear();
 
 		DWORD prof_begin = timeGetTime();
 		fw::FindWay( startCellIndex, start_pos, endCellIndex, end_pos, g_pathList );
@@ -1019,7 +1059,9 @@ void OnLButtonDown()
 		ostrm << "[profile] : " << prof_end << "mSec" ;
 		g_strCalcTime = ostrm.str();
 
-		pickList.clear();
+		std::swap( g_pickList[0], g_pickList[1] );
+		g_pickList.erase( g_pickList.end() -1 );
+
 	}
 
 }
@@ -1100,6 +1142,21 @@ LRESULT CALLBACK MsgProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bo
 //--------------------------------------------------------------------------------------
 void CALLBACK OnKeyboard( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserContext )
 {
+	switch( nChar )
+	{
+	case 'L':
+		{
+			//if( bKeyDown )
+			D3DXVECTOR3 pos( fw::GetMesh("agent").LocalMat._41, 
+				fw::GetMesh("agent").LocalMat._42,
+				fw::GetMesh("agent").LocalMat._43 );
+
+			g_Camera.SetViewParams( &fw::camEyePos, &pos );
+			//else
+			//g_Camera.SetViewParams( &fw::camEyePos, &fw::camLookAt );
+		}
+		break;
+	}
 }
 
 

@@ -81,10 +81,10 @@ namespace fw
 	};
 
 
-	struct fwNeighborCell
+	struct fwEdge
 	{
 		int NeighborIndex; 
-		D3DXVECTOR3 edgeCenter; //ab - bc- ca 순
+		D3DXVECTOR3 center; //ab - bc- ca 순
 		float		arrivalCost;//삼각형중심에서 각ab, bc,ca 순으로 중심까지 거리값. 	
 	};
 
@@ -93,12 +93,20 @@ namespace fw
 	struct fwNaviCell
 	{
 		D3DXVECTOR3 center;
-		fwNeighborCell neighbor[3]; //ab,bc,ca 변을 공유하는 순.
+		D3DXVECTOR3 normal;// 기울기 비교에 쓰임.
+		fwEdge edge[3]; //ab,bc,ca 변을 공유하는 순.
 	};
+
+	struct fwPathNode
+	{
+		D3DXVECTOR3 pos; // 최종 경로 위치
+		int cell_Index; // 몇번째 셀인지 정보 얻어올때 사용.
+	};
+
 
 	//시작점과 목표점에대하여 최종 가중치를 저장하고 
 	//셀인덱스를 저장해놓는다.
-	struct fwPathNode
+	struct fwPathHeapNode
 	{
 		// 현재 셀이 어느 부모와 가장 거리비용이 싼지 저장해놓고 
 		// 최종적으로 경로를 만들때 목적지로부터 시작지로 거슬러 올라간다. 그러므로 첨부터 시작지랑 목적지가 바뀌면 편함.
@@ -106,7 +114,7 @@ namespace fw
 		// 현재 가르키는 셀
 		int kCurrentCell_Index; 
 
-		// fwNaviCell.edgeCenter 의 인덱스값. 자신의 이웃과 공유하는 edge 의 인덱스. 
+		// fwNaviCell.center 의 인덱스값. 자신의 이웃과 공유하는 edge 의 인덱스. 
 		// 자식은 부모를 알고 있다. 자신의 부모가 결정될때 셋팅될값. 길찾기 할때마다 계속 바뀔것임.
 		int kNeighborEdgeIndex; 
 
@@ -116,8 +124,8 @@ namespace fw
 		//a* 에선 H로 통용된다. 말그대로 목적지까지의 값. 묻지도 말고 따지지도 말고 목적지와 가중치 계산함.
 		float	costToGoal;	   
 
-		fwPathNode(): kParentCell_Index (-1),kCurrentCell_Index(-1), kNeighborEdgeIndex(-1), costFromStart(0.0f),costToGoal(0.0f){}
-		fwPathNode( int _kParentCell_Index, int _cellIndex, int _kNeighborEdgeIndex, float _costFromStart,float _costToGoal )
+		fwPathHeapNode(): kParentCell_Index (-1),kCurrentCell_Index(-1), kNeighborEdgeIndex(-1), costFromStart(0.0f),costToGoal(0.0f){}
+		fwPathHeapNode( int _kParentCell_Index, int _cellIndex, int _kNeighborEdgeIndex, float _costFromStart,float _costToGoal )
 		{
 			kParentCell_Index = _kParentCell_Index;
 			kCurrentCell_Index= _cellIndex ;
@@ -126,17 +134,17 @@ namespace fw
 			costToGoal = _costToGoal;
 		}
 
-		bool operator < (const fwPathNode& ref) const
+		bool operator < (const fwPathHeapNode& ref) const
 		{
 			return GetTotalCost() < ref.GetTotalCost() ;
 		}
 
-		bool operator > (const fwPathNode& ref ) const
+		bool operator > (const fwPathHeapNode& ref ) const
 		{
 			return GetTotalCost() > ref.GetTotalCost();
 		}
 
-		bool operator == (const fwPathNode& ref ) const
+		bool operator == (const fwPathHeapNode& ref ) const
 		{
 			return GetTotalCost() == ref.GetTotalCost() ;
 		}
@@ -149,7 +157,7 @@ namespace fw
 
 	class fwPathHeap
 	{
-		typedef std::vector<fwPathNode> container;
+		typedef std::vector<fwPathHeapNode> container;
 		container	m_OpenList;
 	
 #if USECHECKMAP == 1
@@ -166,7 +174,7 @@ namespace fw
 #endif
 		}
 
-		bool Top( fwPathNode& node ) 
+		bool Top( fwPathHeapNode& node ) 
 		{
 			if( m_OpenList.empty() )
 			{
@@ -189,7 +197,7 @@ namespace fw
 			
 			while( it != m_OpenList.end()  )
 			{
-				const fwPathNode& node = *it;
+				const fwPathHeapNode& node = *it;
 				if( node.kCurrentCell_Index == cellIndex )
 					return true;
 				it++;
@@ -200,7 +208,7 @@ namespace fw
 		}
 		void PopHead()
 		{
-			std::pop_heap( m_OpenList.begin(), m_OpenList.end(), std::greater<fwPathNode>() );
+			std::pop_heap( m_OpenList.begin(), m_OpenList.end(), std::greater<fwPathHeapNode>() );
 
 #if USECHECKMAP == 1
 			checkMap.erase(  (*(m_OpenList.end()-1)).kCurrentCell_Index );
@@ -222,7 +230,7 @@ namespace fw
 			return m_OpenList.empty();
 		}
 
-		void AddPathNode( const fwPathNode& node )
+		void AddPathNode( const fwPathHeapNode& node )
 		{
 			// 노드가 이미 있으면 집어넣지 않아.
 			// 다만 코스트가 더 적으면 그것을 적용시킴.
@@ -232,7 +240,7 @@ namespace fw
 
 				while( it != m_OpenList.end()  )
 				{
-					fwPathNode& tmpNode= *it;
+					fwPathHeapNode& tmpNode= *it;
 					if( tmpNode.kCurrentCell_Index == node.kCurrentCell_Index )
 					{
 						if( tmpNode.GetTotalCost() > node.GetTotalCost() )
@@ -242,7 +250,7 @@ namespace fw
 					it++;
 				}
 				// 정렬 하던가 해야함.
-				std::make_heap( m_OpenList.begin(), m_OpenList.end() , std::greater<fwPathNode>() );
+				std::make_heap( m_OpenList.begin(), m_OpenList.end() , std::greater<fwPathHeapNode>() );
 
 #if USECHECKMAP == 1
 				checkMap.insert( node.kCurrentCell_Index );
@@ -251,7 +259,7 @@ namespace fw
 			else
 			{
 				m_OpenList.push_back( node );
-				std::push_heap( m_OpenList.begin(), m_OpenList.end(), std::greater<fwPathNode>() );
+				std::push_heap( m_OpenList.begin(), m_OpenList.end(), std::greater<fwPathHeapNode>() );
 #if USECHECKMAP == 1
 checkMap.insert( node.kCurrentCell_Index );
 #endif
@@ -305,6 +313,6 @@ checkMap.insert( node.kCurrentCell_Index );
 	// 일단은 매우 최대한 간단하고 simple 하게 유지함.
 	void FindWay( const D3DXVECTOR3& start_pos, const D3DXVECTOR3& end_pos, std::vector< D3DXVECTOR3> & g_pathList );
 
-	void FindWay( const int endTriIndex, const D3DXVECTOR3& end_pos, const int startTriIndex, const D3DXVECTOR3& start_pos, std::vector< D3DXVECTOR3> & g_pathList );
+	void FindWay( const int endTriIndex, const D3DXVECTOR3& end_pos, const int startTriIndex, const D3DXVECTOR3& start_pos, std::vector< fwPathNode> & g_pathList );
 
 };

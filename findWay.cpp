@@ -69,18 +69,7 @@ namespace fw
 
 	static std::map<string,fwMesh> g_MeshList;
 
-	struct testCode
-	{
-		testCode()
-		{
-			fw::NaviMesh_Load( "default.xml" );
-			//fw::NaviMesh_Load( "errordefault.xml" );
-			fw::AddMesh_FromXml( "agent.xml" );
-			fw::AddMesh_FromXml( "point.xml" );
-			fw::AddMesh_FromXml( "Sphere01.xml" );
-		}
-	};
-	static testCode tt;	
+
 
 	bool MakeMesh( TiXmlElement* pkElem, fwMesh & mesh )
 	{
@@ -175,6 +164,14 @@ namespace fw
 					const char* szCenter = pkTriElem->Attribute( "Center" );
 					sscanf_s( szCenter, "[%f,%f,%f]", &cell.center.x,&cell.center.y,&cell.center.z );
 
+					D3DXVECTOR3 normal,n0,n1,n2;
+					n0 =mesh.VtxBuffer[ mesh.TriBuffer[ triIndex].index0  ].norm; // 이건 좀아니잖아.
+					n1 =mesh.VtxBuffer[ mesh.TriBuffer[ triIndex].index1  ].norm; // 이건 좀아니잖아.
+					n2 =mesh.VtxBuffer[ mesh.TriBuffer[ triIndex].index2  ].norm; // 이건 좀아니잖아.
+					cell.normal = (n0+n1+n2 )/3.0f;
+					D3DXVec3Normalize( &cell.normal, &cell.normal );
+					// 그냥여기서 일단 노멀계산???
+
 //					const char* szNeighbor = pkTriElem->Attribute( "Neighbor" );
 //					sscanf_s( szNeighbor, "(EdgeIndex XY:%d YZ:%d ZX:%d)", &cell.NeighborTri[0], &cell.NeighborTri[1], &cell.NeighborTri[2] );
 
@@ -184,9 +181,10 @@ namespace fw
 					for( int n=0;n<3; n++) // 이웃 3개의 정보를 셋팅.
 					{
 						const char* szNeighborIndex = pkChildElem->Attribute("NeighborFaceIndex");
-						cell.neighbor[n].NeighborIndex = atoi( szNeighborIndex );
+						cell.edge[n].NeighborIndex = atoi( szNeighborIndex );
 						sscanf_s( pkChildElem->GetText(), "[%f, %f, %f] ( %f )", 
-								  &cell.neighbor[n].edgeCenter.x, &cell.neighbor[n].edgeCenter.y, &cell.neighbor[n].edgeCenter.z, &cell.neighbor[n].arrivalCost);
+								  &cell.edge[n].center.x, &cell.edge[n].center.y, 
+								  &cell.edge[n].center.z, &cell.edge[n].arrivalCost);
 
 						pkChildElem = pkChildElem->NextSiblingElement();
 					}
@@ -452,7 +450,7 @@ namespace fw
 
 	//priority_Vector
 	fwPathHeap g_PathHeap;
-	static std::map<int, fwPathNode> visitedNodeList; //이미 처리 끝난것.
+	static std::map<int, fwPathHeapNode> visitedNodeList; //이미 처리 끝난것.
 
 	/*
 		 현재 쎌의 모든 이웃셀을 찾는다. 
@@ -461,17 +459,17 @@ namespace fw
 		 else
 		 { 인덱스를 오픈리스트에 넣는다. }	
 	*/
-	int FindSmallestHeuristicCell_AddOpenList( const fwPathNode& topNode, const D3DXVECTOR3& endPos )
+	int FindSmallestHeuristicCell_AddOpenList( const fwPathHeapNode& topNode, const D3DXVECTOR3& endPos )
 	{
 		const fwMesh& kMesh = GetNaviMesh();
-//		fwPathNode topNode ;
+//		fwPathHeapNode topNode ;
 //		g_PathHeap.Top( topNode );			
 
 		const fwNaviCell& focusCell= kMesh.CellBuffer[ topNode.kCurrentCell_Index ];
 
 		for( int indexCnt= 0; indexCnt<3; indexCnt++ )
 		{
-			int neighborIndex = focusCell.neighbor[ indexCnt ].NeighborIndex;
+			int neighborIndex = focusCell.edge[ indexCnt ].NeighborIndex;
 			int cnt = visitedNodeList.count( neighborIndex );
 			if( neighborIndex == -1 || cnt != 0 )  // 이웃이 있어야함.
 				continue;
@@ -479,9 +477,9 @@ namespace fw
 			// 부모로부터 내위치까지의거리. 
 			// 현재셀이 부모가 되고 이웃셀은 이때 현재셀이된다.
 			///float G_costFromParent = 0.0f;
-			float G_costFromStart =  topNode.costFromStart+ focusCell.neighbor[indexCnt].arrivalCost ;//현재셀까지 누적된값 + 이웃셀 의코스트.
-			float H_costToGoal = ComputeHeuristic( focusCell.neighbor[ indexCnt ].edgeCenter , endPos );//neighborCell.center 
-			fw::fwPathNode newNode( topNode.kCurrentCell_Index , neighborIndex, indexCnt, G_costFromStart ,H_costToGoal );
+			float G_costFromStart =  topNode.costFromStart+ focusCell.edge[indexCnt].arrivalCost ;//현재셀까지 누적된값 + 이웃셀 의코스트.
+			float H_costToGoal = ComputeHeuristic( focusCell.edge[ indexCnt ].center , endPos );//neighborCell.center 
+			fw::fwPathHeapNode newNode( topNode.kCurrentCell_Index , neighborIndex, indexCnt, G_costFromStart ,H_costToGoal );
 
 			g_PathHeap.AddPathNode( newNode ); // 여기서 추가된것체크를 한뒤에 추가가 된상태면 값만 갱신한다.
 
@@ -546,7 +544,7 @@ namespace fw
 4) 길따라가기 | 방법 >> 스택에서 하나씩 pop() 하면 된다.
 	*/
 
-	D3DXVECTOR3 findNeighborEdgeCenter( const fw::fwPathNode& tmpnode )
+	D3DXVECTOR3 findNeighborEdgeCenter( const fw::fwPathHeapNode& tmpnode )
 	{
 		fw::fwNaviCell Cell = fw::GetNaviMesh().CellBuffer[ tmpnode.kParentCell_Index ];
 		//fw::fwNaviCell Cell = fw::GetNaviMesh().CellBuffer[ tmpnode.kCurrentCell_Index ];
@@ -554,10 +552,10 @@ namespace fw
 		{
 			
 		}
-		return Cell.neighbor[tmpnode.kNeighborEdgeIndex].edgeCenter;
+		return Cell.edge[tmpnode.kNeighborEdgeIndex].center;
 	}
 
-	D3DXVECTOR3 deprecated_findNeighborEdgeCenter( const fw::fwPathNode& tmpnode )
+	D3DXVECTOR3 deprecated_findNeighborEdgeCenter( const fw::fwPathHeapNode& tmpnode )
 	{
 		fw::fwNaviCell parentCell = fw::GetNaviMesh().CellBuffer[ tmpnode.kParentCell_Index ];
 		fw::fwNaviCell focusCell = fw::GetNaviMesh().CellBuffer[ tmpnode.kCurrentCell_Index ];
@@ -566,15 +564,15 @@ namespace fw
 		D3DXVECTOR3 pos(0,0,0);
 		for( int n=0; n<3; n++)
 		{
-			if( focusCell.neighbor[n].NeighborIndex == -1 )
+			if( focusCell.edge[n].NeighborIndex == -1 )
 				continue;
 
 			//edge 데이터가 잘몬되었다.
-			D3DXVECTOR3 tmp= parentCell.center - focusCell.neighbor[n].edgeCenter;
+			D3DXVECTOR3 tmp= parentCell.center - focusCell.edge[n].center;
 			float fMin = D3DXVec3Length( &tmp );
 			if( fMin < fLastMin )
 			{
-				pos = focusCell.neighbor[n].edgeCenter;
+				pos = focusCell.edge[n].center;
 				fLastMin = fMin;
 			}
 		}	
@@ -582,66 +580,156 @@ namespace fw
 		return pos;
 	}
 
-	void buildPath( const int endCellIndex,  const D3DXVECTOR3& start_pos, const D3DXVECTOR3& end_pos , std::vector< D3DXVECTOR3> & g_pathList )
+	void buildPath( const int endCellIndex,  const D3DXVECTOR3& start_pos, const D3DXVECTOR3& end_pos , std::vector< fwPathNode > & g_pathList )
 	{
 		// 최종적으로 목적지에 닿았다면 그것이 top 이 될것이다.
 		// 그것의 부모노드를 차곡차곡 찾아가자.
-		g_pathList.push_back( end_pos );
+		fwPathNode tmpPathNode;
+		tmpPathNode.cell_Index=endCellIndex;
+		tmpPathNode.pos = end_pos ;
+		g_pathList.push_back( tmpPathNode );
 
 		if( visitedNodeList.empty() || visitedNodeList.count( endCellIndex ) == 0 )
 			return;
 
 
-		fwPathNode node = visitedNodeList[endCellIndex];
-		while( node.kParentCell_Index != - 1 )
+		fwPathHeapNode tmpHeapNode = visitedNodeList[endCellIndex];
+		while( tmpHeapNode.kParentCell_Index != - 1 )
 		{//부모노드가 시작노드와 같을때까지 계속 찾기.시작노드만 부모가 -1 로 셋팅되있음.
 
 			// center 로 하면 문제가 있음. 직선거리가 되버림. edge 를 꼭 거쳐야함.
 			// 자신의 edge 중에서 부모의 중심과 가장 가까운 edge를 찾는다.
 
-			const D3DXVECTOR3& pos = findNeighborEdgeCenter( node );
-			g_pathList.push_back( pos );
+			const D3DXVECTOR3& pos = findNeighborEdgeCenter( tmpHeapNode );
 
-			node = visitedNodeList[ node.kParentCell_Index];
+			tmpPathNode.pos = pos;
+			tmpPathNode.cell_Index = tmpHeapNode.kCurrentCell_Index;
+
+			g_pathList.push_back( tmpPathNode );
+
+			tmpHeapNode = visitedNodeList[ tmpHeapNode.kParentCell_Index];
 
 		}
 
+		tmpPathNode.cell_Index = tmpHeapNode.kCurrentCell_Index;
+		tmpPathNode.pos = start_pos;
 		// 보간될 길을 모두 찾았으면 start_pos 가 최종위치임.
-		g_pathList.push_back( start_pos );
+		g_pathList.push_back( tmpPathNode );
 
+	}
+
+	bool IsSameNormal( const int cellIndexA, const int cellIndexB )
+	{
+		const fwMesh& kMesh = GetNaviMesh();
+
+		const fwNaviCell& cellA = kMesh.CellBuffer[ cellIndexA ];
+		const fwNaviCell& cellB = kMesh.CellBuffer[ cellIndexB ];
+
+		D3DXVECTOR3 vOut;
+		D3DXVec3Cross( &vOut, &cellA.normal, &cellB.normal );
+
+		float len = D3DXVec3Length( &vOut );
+		if( len >= 0.1f ) // 선분이 조금이라도 각이 다르면 
+			return false;
+
+		return true;
+	}
+
+	bool IsShowEachOther( int pinFocus, int testFocus )
+	{
+		return true;
+	}
+
+	void Optimize_OmitPath( std::vector< fwPathNode > & pathList )
+	{
+		if( pathList.size() <= 2 ) //2개이하면 계산 안함.
+			return; 
+
+		vector<fwPathNode>::iterator it = pathList.begin();
+		
+		it+=1; // 시작+1 은 같은 삼각형 인덱스이므로 건너뜀.
+		int pinFocus = (*it).cell_Index; // 테스트기준이 되는 포커스인덱스
+
+		it+=1;
+		int testFocus = (*it).cell_Index; // 테스트 대상 포커스인덱스
+		
+		
+		while( it != pathList.end() )
+		{
+			if( IsSameNormal( pinFocus, testFocus ) && IsShowEachOther( pinFocus, testFocus ) )
+			{//같은 기울기의 평면이어야 하고, 서로 중점간 연결했을때 열린엣지를 통해야 한다.
+				(*it).cell_Index = -1; //테스트 포커스는 빼도되는 무효한인덱스로 설정.
+				// 무효한 애들은 한방에 다 빼버림.
+	
+			}
+			else
+			{
+				pinFocus = testFocus;
+			}
+
+			it++;
+				if( it == pathList.end() )
+					break;
+				testFocus = (*it).cell_Index;
+
+			it++;
+		}
+		
+		it = pathList.begin();
+		while( it != pathList.end() )
+		{
+			if( (*it).cell_Index == -1 )
+				it = pathList.erase( it );
+			else
+			it++;
+		}
+
+	}
+	
+	void Optimize_FineTuning( std::vector<fwPathNode>& pathList )
+	{
+	
 	}
 
 	// 이미 외부에서는 반직선 값만 넘겨주게 해야 될듯. 피킹으로 삼각형(셀) 인덱스를 찾아서 넘겨줬다. 
 	// 일단 g_pathList 는 최단거리 최적화는 하지않는다.
-	void FindWay( const int _startCellIndex, const D3DXVECTOR3& _start_pos, const int _endCellIndex, const D3DXVECTOR3& _end_pos , std::vector< D3DXVECTOR3> & g_pathList )
+	void FindWay(	const int _startCellIndex, const D3DXVECTOR3& _start_pos, 
+					const int _endCellIndex, const D3DXVECTOR3& _end_pos , std::vector< fwPathNode > & pathList )
 	{
 		int startCellIndex =_endCellIndex;
 		const D3DXVECTOR3& start_pos= _end_pos;
 		const int endCellIndex = _startCellIndex;
 		const D3DXVECTOR3& end_pos =   _start_pos;
 
-		g_pathList.clear();
+		pathList.clear();
 		g_PathHeap.clear();
 		visitedNodeList.clear();
 
 		// 새로운 이웃셀을 체크할때 여기에 있는지 체크해본뒤 있다면 건너뜀.
 		int  currCell = startCellIndex;
-		fwPathNode node( -1, startCellIndex, 0, -1, ComputeHeuristic( start_pos, end_pos ) );
+		fwPathHeapNode node( -1, startCellIndex, 0, -1, ComputeHeuristic( start_pos, end_pos ) );
 		g_PathHeap.AddPathNode( node );
 
 		if( currCell == endCellIndex  )
 		{
-			g_pathList.push_back( start_pos);
-			g_pathList.push_back( end_pos );		
+			fwPathNode node;
+
+			node.pos = start_pos;
+			node.cell_Index=_startCellIndex;
+			pathList.push_back( node );
+
+			node.pos = end_pos ;
+			node.cell_Index=_endCellIndex;
+			pathList.push_back( node);		
 		}
 		else
 		{
 			while( g_PathHeap.empty() == false  )
 			{
-				fwPathNode currentNode;
+				fwPathHeapNode currentNode;
 				g_PathHeap.Top(currentNode);
 				g_PathHeap.PopHead();
-				visitedNodeList.insert( pair< int, fwPathNode>( currentNode.kCurrentCell_Index ,currentNode) ); 
+				visitedNodeList.insert( pair< int, fwPathHeapNode>( currentNode.kCurrentCell_Index ,currentNode) ); 
 
 				if( currentNode.kCurrentCell_Index == endCellIndex ) //끝에서 부터 시작위치로 가는것이기에..
 					break;
@@ -653,40 +741,20 @@ namespace fw
 				//PROF_END();
 			}
 
-			buildPath( endCellIndex, start_pos, end_pos, g_pathList );
+			buildPath( endCellIndex, start_pos, end_pos, pathList );
+			Optimize_OmitPath( pathList ); // 직선경로는 생략시킴.
+			Optimize_FineTuning( pathList ); // 생략된 경로를 미세조정함.
 		}
 	}
 
-
-	/*
-		 1. FocusCell설정 ; 처음 기본은 시작셀이됨.
-		   
-		 2. foreach( FocusCell is not EndCell  )
-		    {
-				line = FocusCell.Path? - NextPathCell.Center
-
-				통과된 edge = line 이 통과하는 Edge 가 FocusCell'의 3개의 edge중 검색.
-				if(  )
-			}
-		    
-
-	*/
-	
-
-	
-	void optimizePath( const int endCellIndex, const D3DXVECTOR3& end_pos, 
-				const int startCellIndex, const D3DXVECTOR3& start_pos, std::vector< D3DXVECTOR3> & g_pathList )
-	{
-
-	}
 
 
 	// 시작위치와 끝위치를 넣으면 g_pathList 가 나온다.
 	// 만일 시간이오래 걸리면 비동기 처리를 해야 하려나.
 	// 일단은 매우 최대한 간단하고 simple 하게 유지함.
-	void FindWay( const D3DXVECTOR3& start_pos, const D3DXVECTOR3& end_pos, std::vector< D3DXVECTOR3> & g_pathList )
+	void FindWay( const D3DXVECTOR3& start_pos, const D3DXVECTOR3& end_pos, std::vector< D3DXVECTOR3> & pathList )
 	{
-		g_pathList.clear();
+		pathList.clear();
 
 		//for( size_t n=0; n< fw::GetNaviMesh().TriBuffer.size(); n++)
 		//{

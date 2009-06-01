@@ -34,7 +34,18 @@ std::wstring g_stPickPos = L"Pick";
 std::wstring g_strCalcTime = L"n mSec";
 std::wstring g_stNeighBorIndex[3]={ L"-1" , L"-1", L"-1"};
 
-
+	struct testCode
+	{
+		testCode()
+		{
+			//fw::NaviMesh_Load( "default.xml" );
+			fw::NaviMesh_Load( "errordefault.xml" );
+			fw::AddMesh_FromXml( "agent.xml" );
+			fw::AddMesh_FromXml( "point.xml" );
+			fw::AddMesh_FromXml( "Sphere01.xml" );
+		}
+	};
+	static testCode tt;	
 
 //#define DEBUG_VS   // Uncomment this line to debug D3D9 vertex shaders 
 //#define DEBUG_PS   // Uncomment this line to debug D3D9 pixel shaders 
@@ -71,12 +82,12 @@ ID3DXEffect*            g_pEffect9 = NULL;
 //--------------------------------------------------------------------------------------
 #define agent_state_stop 0x01
 #define agent_state_move 0x02
-#define agent_speed 0.015f
+#define agent_speed 0.0015f
 int		g_AgentState = agent_state_stop;
 int		g_nCurrentPathIndex;
-
+static float g_Agentlerp = 0.0f;
 static std::vector<PickInfo> g_pickList;
-std::vector<D3DXVECTOR3> g_pathList;
+std::vector<fw::fwPathNode> g_pathList;
 int	g_nCurrentCellIndex = -1;
 
 //--------------------------------------------------------------------------------------
@@ -99,7 +110,7 @@ void    InitApp();
 void    RenderText();
 
 void RenderMesh( LPDIRECT3DDEVICE9 lpDev, const fw::fwMesh& mesh, bool bDrawEdge = false, D3DCOLOR argb=D3DCOLOR_ARGB(0xff,0xff,0xff,0xff) );
-
+std::vector<D3DXVECTOR3> GetPosList( const std::vector< fw::fwPathNode> & arg );
 
 //--------------------------------------------------------------------------------------
 // Entry point to the program. Initializes everything and goes into a message processing 
@@ -418,12 +429,89 @@ HRESULT CALLBACK OnD3D9ResetDevice( IDirect3DDevice9* pd3dDevice,
     return S_OK;
 }
 
+std::vector<D3DXVECTOR3> GetPosList( const std::vector< fw::fwPathNode> & arg )
+{
+	std::vector<D3DXVECTOR3> tmp(0);
+
+	for( size_t n=0; n< arg.size(); n++ )
+	{
+		tmp.push_back( arg[ n ].pos );
+	}
+	return tmp;
+}
+
+
+void Render_Line( LPDIRECT3DDEVICE9 lpDev, const D3DXVECTOR3& p0, const D3DXVECTOR3& p1 )
+{
+	D3DVIEWPORT9 mViewport;   // 뷰포트 데이터 저장
+D3DVIEWPORT9 mNewViewport; // 새로운 뷰포트 데이터 저장
+float g_fViewportBias   = 0.00000152588f;
+// 투영 행렬이 적용된다.
+// 뷰 행렬이 적용된다.
+lpDev->GetViewport(&mViewport);
+mNewViewport = mViewport;
+mNewViewport.MinZ -= g_fViewportBias; 
+mNewViewport.MaxZ -= g_fViewportBias; 
+	
+		const D3DXVECTOR3 tmpData[2]={ p0,p1 };
+		D3DXMATRIXA16 matWorld;
+		D3DXMatrixIdentity( &matWorld );
+
+		lpDev->SetFVF( D3DFVF_XYZ );
+		lpDev->SetViewport( &mNewViewport );
+
+	    lpDev->SetRenderState( D3DRS_LIGHTING, FALSE );
+		lpDev->SetRenderState( D3DRS_ALPHABLENDENABLE, TRUE );
+		lpDev->SetRenderState( D3DRS_SRCBLEND, D3DBLEND_SRCALPHA ); //
+		lpDev->SetRenderState( D3DRS_DESTBLEND,D3DBLEND_INVSRCALPHA ); //  
+		lpDev->SetRenderState(D3DRS_TEXTUREFACTOR , D3DCOLOR_ARGB(0xff,0xff,0x00, 0x00)); 
+		lpDev->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_TFACTOR);    
+		lpDev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG2);
+		lpDev->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_DIFFUSE);    // 투명도 적용됨.
+		lpDev->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);    // 투명도 적용됨.
+		lpDev->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG2); 
+
+		lpDev->DrawPrimitiveUP( D3DPT_LINELIST, 1, tmpData, sizeof( D3DXVECTOR3 ) );
+
+		lpDev->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
+		lpDev->SetTextureStageState(0, D3DTSS_COLOROP,  D3DTOP_MODULATE ); 
+		lpDev->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE); //D3DTA_CURRENT
+		lpDev->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_CURRENT  ); //
+
+		lpDev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1); // D3DTOP_MODULATE
+		lpDev->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TFACTOR); //D3DTA_CURRENT
+		lpDev->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_CURRENT); //D3DTA_CURRENT
+
+		lpDev->SetViewport( &mViewport );
+	    lpDev->SetRenderState( D3DRS_LIGHTING, FALSE );
+}
+
+void Render_Normal( LPDIRECT3DDEVICE9 lpDev, const std::vector< fw::fwPathNode >& pathList )
+{
+	if( pathList.empty() == true )
+		return;
+
+	for( size_t n= 0; n< pathList.size(); n++ )
+	{
+		const fw::fwPathNode& node = pathList[n];
+		const D3DXVECTOR3& org = fw::GetNaviMesh().CellBuffer[node.cell_Index].center;
+		const D3DXVECTOR3& extend =org+	(fw::GetNaviMesh().CellBuffer[node.cell_Index].normal*60);
+
+		Render_Line( lpDev, org, extend );
+
+	}
+}
+
 // line 은 bias 가 안먹는다. 뷰포트 변환으로 해결?
 
-void Render_Line( LPDIRECT3DDEVICE9 lpDev, const std::vector< D3DXVECTOR3 >& posList )//fw::Vertex
-	{
-		if( posList.empty() )
+void Render_Line( LPDIRECT3DDEVICE9 lpDev, const std::vector< fw::fwPathNode >& argPosList )//fw::Vertex
+{
+		if( argPosList.empty() )
 			return;
+
+		std::vector<D3DXVECTOR3> posList = GetPosList( argPosList );
+		
+		//line 에 보여줄 위치만 계산.
 
 D3DVIEWPORT9 mViewport;   // 뷰포트 데이터 저장
 D3DVIEWPORT9 mNewViewport; // 새로운 뷰포트 데이터 저장
@@ -451,8 +539,7 @@ mNewViewport = mViewport;
 mNewViewport.MinZ -= g_fViewportBias; 
 mNewViewport.MaxZ -= g_fViewportBias; 
 
-
-		WORD tmpIndex[4096]={0,};
+		static WORD tmpIndex[4096]={0,};
 		for( size_t n=0; n<posList.size()*2; n += 2 )
 		{
 			if( n==0 )
@@ -699,16 +786,19 @@ HRESULT OnRenderPrimitive(IDirect3DDevice9* lpDev, double fTime, float fElapsedT
 	{
 		if( g_pathList.empty() == false )
 		{
-			fw::GetMesh("point").LocalMat._41 = g_pathList[0].x;
-			fw::GetMesh("point").LocalMat._42 = g_pathList[0].y;
-			fw::GetMesh("point").LocalMat._43 = g_pathList[0].z;
-
+			//fw::GetMesh("point").LocalMat._41 = g_pathList[0].x;
+			//fw::GetMesh("point").LocalMat._42 = g_pathList[0].y;
+			//fw::GetMesh("point").LocalMat._43 = g_pathList[0].z;
+			D3DXVECTOR3 pos = g_pathList[ 0 ].pos;
+			D3DXMatrixTranslation( &fw::GetMesh( "point" ).LocalMat, pos.x,pos.y,pos.z );
 
 			RenderMesh( lpDev, fw::GetMesh("point") );
 
-			fw::GetMesh("point").LocalMat._41 = g_pathList[g_pathList.size()-1].x;
-			fw::GetMesh("point").LocalMat._42 = g_pathList[g_pathList.size()-1].y;
-			fw::GetMesh("point").LocalMat._43 = g_pathList[g_pathList.size()-1].z;
+			pos = g_pathList[g_pathList.size()-1].pos;
+			D3DXMatrixTranslation( &fw::GetMesh( "point" ).LocalMat, pos.x,pos.y,pos.z );
+			//fw::GetMesh("point").LocalMat._41 = g_pathList[g_pathList.size()-1].x;
+			//fw::GetMesh("point").LocalMat._42 = g_pathList[g_pathList.size()-1].y;
+			//fw::GetMesh("point").LocalMat._43 = g_pathList[g_pathList.size()-1].z;
 			RenderMesh( lpDev, fw::GetMesh("point") );
 
 			//for( size_t n=1; n< g_pathList.size()-1; n++)
@@ -729,6 +819,7 @@ HRESULT OnRenderPrimitive(IDirect3DDevice9* lpDev, double fTime, float fElapsedT
 				fw::GetMesh("point").LocalMat._22 = 1.0f;
 				fw::GetMesh("point").LocalMat._33 = 1.0f;
 			Render_Line(lpDev, g_pathList );
+			Render_Normal( DXUTGetD3D9Device(), g_pathList );
 		}
 	}
 	catch( std::exception ex )
@@ -739,11 +830,11 @@ HRESULT OnRenderPrimitive(IDirect3DDevice9* lpDev, double fTime, float fElapsedT
 	
 	if( g_pathList.empty() ==false )
 	{
-		static float lerp = 0.0f;
-		lerp += agent_speed;
-		if( lerp >1.0f )
+
+		g_Agentlerp += agent_speed;
+		if( g_Agentlerp >1.0f )
 		{
-			lerp = 0.0f;
+			g_Agentlerp = 0.0f;
 
 			if( g_pathList.empty() == false )
 				g_pathList.erase( g_pathList.begin() );
@@ -751,11 +842,17 @@ HRESULT OnRenderPrimitive(IDirect3DDevice9* lpDev, double fTime, float fElapsedT
 
 		if( g_pathList.size() > 1 )
 		{
-		const D3DXVECTOR3& pos = g_pathList[0] + (( g_pathList[1]-g_pathList[0])* lerp ) ;
+		const D3DXVECTOR3& pos = g_pathList[0].pos + (( g_pathList[1].pos-g_pathList[0].pos)* g_Agentlerp ) ;
 
-		fw::GetMesh( "agent" ).LocalMat._41 = pos.x;
-		fw::GetMesh( "agent" ).LocalMat._42 = pos.y;
-		fw::GetMesh( "agent" ).LocalMat._43 = pos.z;
+//		fw::GetMesh( "agent" ).LocalMat._41 = pos.x;
+//		fw::GetMesh( "agent" ).LocalMat._42 = pos.y;
+//		fw::GetMesh( "agent" ).LocalMat._43 = pos.z;
+		//D3DXMATRIX kRot,kTrans;
+		//D3DXMatrixTranslation( &kTrans, pos.x,pos.y,pos.z );
+		//D3DXMatrixRotationYawPitchRoll( &kRot, fYaw, 0,0); 
+		D3DXMatrixTranslation( &fw::GetMesh( "agent" ).LocalMat, pos.x,pos.y,pos.z );
+		
+
 		}
 	}
 
@@ -951,15 +1048,18 @@ void DrawCellInfo()
 	for( int n=0; n< 3; n++)
 	{
 	
-	fw::GetMesh("sphere01").LocalMat._41 = cell.neighbor[n].edgeCenter.x;
-	fw::GetMesh("sphere01").LocalMat._42 = cell.neighbor[n].edgeCenter.y;
-	fw::GetMesh("sphere01").LocalMat._43 = cell.neighbor[n].edgeCenter.z;
+	fw::GetMesh("sphere01").LocalMat._41 = cell.edge[n].center.x;
+	fw::GetMesh("sphere01").LocalMat._42 = cell.edge[n].center.y;
+	fw::GetMesh("sphere01").LocalMat._43 = cell.edge[n].center.z;
 	RenderMesh( DXUTGetD3D9Device(), fw::GetMesh("sphere01") );
 	}
+
+	
 }
 
 void OnLButtonDown()
 {
+	g_Agentlerp = 0.0f;
 	g_nCurrentCellIndex = -1;
 	RAY ray = MakeRay();
 
@@ -1146,12 +1246,15 @@ void CALLBACK OnKeyboard( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserC
 	{
 	case 'L':
 		{
-			//if( bKeyDown )
+			if( bKeyDown )
+			{
 			D3DXVECTOR3 pos( fw::GetMesh("agent").LocalMat._41, 
 				fw::GetMesh("agent").LocalMat._42,
 				fw::GetMesh("agent").LocalMat._43 );
 
-			g_Camera.SetViewParams( &fw::camEyePos, &pos );
+			D3DXVECTOR3 eyept = *g_Camera.GetEyePt();
+			g_Camera.SetViewParams( &eyept , &pos );
+			}
 			//else
 			//g_Camera.SetViewParams( &fw::camEyePos, &fw::camLookAt );
 		}

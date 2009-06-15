@@ -552,6 +552,7 @@ namespace fw
 		{
 			
 		}
+		Cell.edge[tmpnode.kNeighborEdgeIndex].bUsePath=true;
 		return Cell.edge[tmpnode.kNeighborEdgeIndex].center;
 	}
 
@@ -621,7 +622,6 @@ namespace fw
 	bool IsSameNormal( const int cellIndexA, const int cellIndexB )
 	{
 		const fwMesh& kMesh = GetNaviMesh();
-
 		const fwNaviCell& cellA = kMesh.CellBuffer[ cellIndexA ];
 		const fwNaviCell& cellB = kMesh.CellBuffer[ cellIndexB ];
 
@@ -635,57 +635,80 @@ namespace fw
 		return true;
 	}
 
-	bool IsShowEachOther( int pinFocus, int testFocus )
+	// 각 셀의 경로로 쓰이는 엣지인덱스를 각각 얻어냄.
+	// pinFocus셀과 testFocus셀을 연결해보고 
+	// 서로가 향하는 가장가까운 엣지의 인덱스를 계산해냄
+	// 원래의 경로로 쓰이는 엣지 인덱스와
+	// 실제 연결시 계산된 인덱스가 같다면 true
+	// 하나라도 틀리다면 false
+	bool IsShowEachOther( int cellIndexA, int cellIndexB )
 	{
+		const fwMesh& kMesh = GetNaviMesh();
+		const fwNaviCell& cellA = kMesh.CellBuffer[ cellIndexA ];
+		const fwNaviCell& cellB = kMesh.CellBuffer[ cellIndexB ];
+
+		map<float, int > openEdgeIndex;
+		for( int n=0; n< 3; n++)
+		{
+			D3DXVECTOR3 vret = cellA.edge[n].center - cellB.center;
+			float fRet = D3DXVec3Length( &vret );
+			openEdgeIndex[ fRet ] = n;
+		}
+		map<float, int > ::iterator it = openEdgeIndex.begin();
+		int cellAEdgeIndex=(*it).second; //a의 열린 엣지인덱스는?
+		if( cellA.edge[ cellAEdgeIndex ].bUsePath == false )
+			return false;
+
+		openEdgeIndex.clear();
+		for( int n=0; n< 3; n++)
+		{
+			D3DXVECTOR3 vret = cellB.edge[n].center - cellA.center;
+			float fRet = D3DXVec3Length( &vret );
+			openEdgeIndex[ fRet ] = n;
+		}
+		it = openEdgeIndex.begin();
+		int cellBEdgeIndex=(*it).second;
+		if( cellB.edge[ cellBEdgeIndex ].bUsePath == false )
+			return false;
+
 		return true;
 	}
+
+	class OmitPathProc
+	{
+		static int pinFocus,testFocus;
+		//bool operator () 
+	};
 
 	void Optimize_OmitPath( std::vector< fwPathNode > & pathList )
 	{
 		if( pathList.size() <= 2 ) //2개이하면 계산 안함.
 			return; 
 
-		vector<fwPathNode>::iterator it = pathList.begin();
-		
-		it+=1; // 시작+1 은 같은 삼각형 인덱스이므로 건너뜀.
-		int pinFocus = (*it).cell_Index; // 테스트기준이 되는 포커스인덱스
+		vector<fwPathNode>::iterator it_pinFocus = pathList.begin();
+		vector<fwPathNode>::iterator it_testFocus = pathList.begin();
+		//for_each( pathList.begin(), pathList.end()-1, OmitPathProc() );
 
-		it+=1;
-		int testFocus = (*it).cell_Index; // 테스트 대상 포커스인덱스
-		
-		
-		while( it != pathList.end() )
+		while( it_testFocus != pathList.end() )
 		{
-			if( IsSameNormal( pinFocus, testFocus ) && IsShowEachOther( pinFocus, testFocus ) )
+			int pinFocus = (*it_pinFocus).cell_Index; // 테스트기준이 되는 포커스인덱스
+			int testFocus = (*it_testFocus).cell_Index; // 테스트 대상 포커스인덱스
+
+			if( pinFocus != testFocus && IsSameNormal( pinFocus, testFocus ) && IsShowEachOther( pinFocus, testFocus )  )
 			{//같은 기울기의 평면이어야 하고, 서로 중점간 연결했을때 열린엣지를 통해야 한다.
-				(*it).cell_Index = -1; //테스트 포커스는 빼도되는 무효한인덱스로 설정.
 				// 무효한 애들은 한방에 다 빼버림.
-	
+				it_pinFocus = pathList.erase( it_pinFocus );
+				it_testFocus = it_pinFocus;
 			}
-			else
+			else 
 			{
-				pinFocus = testFocus;
+				it_pinFocus = it_testFocus;
 			}
-
-			it++;
-				if( it == pathList.end() )
-					break;
-				testFocus = (*it).cell_Index;
-
-			it++;
+			it_testFocus++;
 		}
-		
-		it = pathList.begin();
-		while( it != pathList.end() )
-		{
-			if( (*it).cell_Index == -1 )
-				it = pathList.erase( it );
-			else
-			it++;
-		}
-
 	}
 	
+	//가장 가까운 경로점으로 튜닝해줌.
 	void Optimize_FineTuning( std::vector<fwPathNode>& pathList )
 	{
 	

@@ -83,6 +83,7 @@ namespace fw
 
 	struct fwEdge
 	{
+		bool bUsePath; // 경로로 쓰인 엣지인가?
 		int NeighborIndex; 
 		D3DXVECTOR3 center; //ab - bc- ca 순
 		float		arrivalCost;//삼각형중심에서 각ab, bc,ca 순으로 중심까지 거리값. 	

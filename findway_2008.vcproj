@@ -164,6 +164,7 @@
 				GenerateManifest="false"
 				DelayLoadDLLs=""
 				GenerateDebugInformation="false"
+				ProgramDatabaseFile=""
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -252,6 +253,97 @@
 				GenerateManifest="false"
 				DelayLoadDLLs=""
 				GenerateDebugInformation="true"
+				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				TargetMachine="1"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+				EmbedManifest="false"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="debuginRelease|Win32"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				OmitFramePointers="true"
+				AdditionalIncludeDirectories="DXUT\Core; DXUT\Optional"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
+				StringPooling="true"
+				ExceptionHandling="0"
+				RuntimeLibrary="0"
+				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderThrough="dxut.h"
+				WarningLevel="4"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="4"
+				ShowIncludes="false"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalOptions="/IGNORE:4089"
+				AdditionalDependencies="dxerr.lib dxguid.lib d3dx9.lib d3dx10.lib d3d9.lib winmm.lib comctl32.lib"
+				OutputFile="$(OutDir)/findway.exe"
+				LinkIncremental="2"
+				GenerateManifest="false"
+				DelayLoadDLLs=""
+				GenerateDebugInformation="true"
+				ProgramDatabaseFile="$(OutDir)/findway.pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -581,6 +673,13 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="debuginRelease|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Debug|x64"
 					>
 					<Tool
@@ -635,6 +734,14 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Profile|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="debuginRelease|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"

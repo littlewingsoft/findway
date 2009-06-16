@@ -450,7 +450,7 @@ namespace fw
 
 	//priority_Vector
 	fwPathHeap g_PathHeap;
-	static std::map<int, fwPathHeapNode> visitedNodeList; //이미 처리 끝난것.
+	static std::map<int, fwHeapNode> visitedHeapNodeMap; //이미 처리 끝난것.
 
 	/*
 		 현재 쎌의 모든 이웃셀을 찾는다. 
@@ -459,27 +459,26 @@ namespace fw
 		 else
 		 { 인덱스를 오픈리스트에 넣는다. }	
 	*/
-	int FindSmallestHeuristicCell_AddOpenList( const fwPathHeapNode& topNode, const D3DXVECTOR3& endPos )
+	int FindSmallestHeuristicCell_AddOpenList( const fwHeapNode& topNode, const D3DXVECTOR3& endPos )
 	{
 		const fwMesh& kMesh = GetNaviMesh();
-//		fwPathHeapNode topNode ;
-//		g_PathHeap.Top( topNode );			
+		const fwNaviCell& focusCell= kMesh.CellBuffer[ topNode.kIndex_CurrentCell ];
 
-		const fwNaviCell& focusCell= kMesh.CellBuffer[ topNode.kCurrentCell_Index ];
-
-		for( int indexCnt= 0; indexCnt<3; indexCnt++ )
+		// 이웃을 모두 검색하여 가중치 계산후 힙에 추가한다.
+		// 패스힙에선 가장 가능성 높은 녀석이 대가리가 됨.
+		for( int edgeIndex= 0; edgeIndex<3; edgeIndex++ )
 		{
-			int neighborIndex = focusCell.edge[ indexCnt ].NeighborIndex;
-			int cnt = visitedNodeList.count( neighborIndex );
+			int neighborIndex = focusCell.edge[ edgeIndex ].NeighborIndex;
+			int cnt = visitedHeapNodeMap.count( neighborIndex );
 			if( neighborIndex == -1 || cnt != 0 )  // 이웃이 있어야함.
 				continue;
 
 			// 부모로부터 내위치까지의거리. 
 			// 현재셀이 부모가 되고 이웃셀은 이때 현재셀이된다.
 			///float G_costFromParent = 0.0f;
-			float G_costFromStart =  topNode.costFromStart+ focusCell.edge[indexCnt].arrivalCost ;//현재셀까지 누적된값 + 이웃셀 의코스트.
-			float H_costToGoal = ComputeHeuristic( focusCell.edge[ indexCnt ].center , endPos );//neighborCell.center 
-			fw::fwPathHeapNode newNode( topNode.kCurrentCell_Index , neighborIndex, indexCnt, G_costFromStart ,H_costToGoal );
+			float G_costFromStart =  topNode.costFromStart+ focusCell.edge[ edgeIndex ].arrivalCost ;//현재셀까지 누적된값 + 이웃셀 의코스트.
+			float H_costToGoal = ComputeHeuristic( focusCell.edge[ edgeIndex ].center , endPos );//neighborCell.center 
+			fw::fwHeapNode newNode( topNode.kIndex_CurrentCell, neighborIndex, edgeIndex, G_costFromStart ,H_costToGoal );
 
 			g_PathHeap.AddPathNode( newNode ); // 여기서 추가된것체크를 한뒤에 추가가 된상태면 값만 갱신한다.
 
@@ -544,42 +543,19 @@ namespace fw
 4) 길따라가기 | 방법 >> 스택에서 하나씩 pop() 하면 된다.
 	*/
 
-	D3DXVECTOR3 findNeighborEdgeCenter( const fw::fwPathHeapNode& tmpnode )
+	D3DXVECTOR3 findNeighborEdgeCenter( const fw::fwHeapNode& tmpnode )
 	{
-		fw::fwNaviCell Cell = fw::GetNaviMesh().CellBuffer[ tmpnode.kParentCell_Index ];
-		//fw::fwNaviCell Cell = fw::GetNaviMesh().CellBuffer[ tmpnode.kCurrentCell_Index ];
-		//if( tmpnode.kCurrentCell_Index != -1 )
+		fw::fwNaviCell Cell = fw::GetNaviMesh().CellBuffer[ tmpnode.kIndex_ParentCell ];
+		//fw::fwNaviCell Cell = fw::GetNaviMesh().CellBuffer[ tmpnode.kIndex_CurrentCell ];
+		//if( tmpnode.kIndex_CurrentCell != -1 )
 		{
+			//fw::GetNaviMesh().CellBuffer[ tmpnode.kIndex_CurrentCell ].edge[  ];
 			
 		}
-		Cell.edge[tmpnode.kNeighborEdgeIndex].bUsePath=true;
-		return Cell.edge[tmpnode.kNeighborEdgeIndex].center;
+		//Cell.edge[tmpnode.kIndex_NeighborEdge].bUsePath=true;
+		return Cell.edge[tmpnode.kIndex_NeighborEdge].center;
 	}
 
-	D3DXVECTOR3 deprecated_findNeighborEdgeCenter( const fw::fwPathHeapNode& tmpnode )
-	{
-		fw::fwNaviCell parentCell = fw::GetNaviMesh().CellBuffer[ tmpnode.kParentCell_Index ];
-		fw::fwNaviCell focusCell = fw::GetNaviMesh().CellBuffer[ tmpnode.kCurrentCell_Index ];
-
-		float fLastMin =  3.4E+38f;
-		D3DXVECTOR3 pos(0,0,0);
-		for( int n=0; n<3; n++)
-		{
-			if( focusCell.edge[n].NeighborIndex == -1 )
-				continue;
-
-			//edge 데이터가 잘몬되었다.
-			D3DXVECTOR3 tmp= parentCell.center - focusCell.edge[n].center;
-			float fMin = D3DXVec3Length( &tmp );
-			if( fMin < fLastMin )
-			{
-				pos = focusCell.edge[n].center;
-				fLastMin = fMin;
-			}
-		}	
-
-		return pos;
-	}
 
 	void buildPath( const int endCellIndex,  const D3DXVECTOR3& start_pos, const D3DXVECTOR3& end_pos , std::vector< fwPathNode > & g_pathList )
 	{
@@ -590,12 +566,12 @@ namespace fw
 		tmpPathNode.pos = end_pos ;
 		g_pathList.push_back( tmpPathNode );
 
-		if( visitedNodeList.empty() || visitedNodeList.count( endCellIndex ) == 0 )
+		if( visitedHeapNodeMap.empty() || visitedHeapNodeMap.count( endCellIndex ) == 0 )
 			return;
 
 
-		fwPathHeapNode tmpHeapNode = visitedNodeList[endCellIndex];
-		while( tmpHeapNode.kParentCell_Index != - 1 )
+		fwHeapNode tmpHeapNode = visitedHeapNodeMap[endCellIndex];
+		while( tmpHeapNode.kIndex_ParentCell != - 1 )
 		{//부모노드가 시작노드와 같을때까지 계속 찾기.시작노드만 부모가 -1 로 셋팅되있음.
 
 			// center 로 하면 문제가 있음. 직선거리가 되버림. edge 를 꼭 거쳐야함.
@@ -604,15 +580,15 @@ namespace fw
 			const D3DXVECTOR3& pos = findNeighborEdgeCenter( tmpHeapNode );
 
 			tmpPathNode.pos = pos;
-			tmpPathNode.cell_Index = tmpHeapNode.kCurrentCell_Index;
+			tmpPathNode.cell_Index = tmpHeapNode.kIndex_ParentCell;//kIndex_CurrentCell;
 
 			g_pathList.push_back( tmpPathNode );
 
-			tmpHeapNode = visitedNodeList[ tmpHeapNode.kParentCell_Index];
+			tmpHeapNode = visitedHeapNodeMap[ tmpHeapNode.kIndex_ParentCell];
 
 		}
 
-		tmpPathNode.cell_Index = tmpHeapNode.kCurrentCell_Index;
+		tmpPathNode.cell_Index = tmpHeapNode.kIndex_CurrentCell;
 		tmpPathNode.pos = start_pos;
 		// 보간될 길을 모두 찾았으면 start_pos 가 최종위치임.
 		g_pathList.push_back( tmpPathNode );
@@ -655,6 +631,7 @@ namespace fw
 			openEdgeIndex[ fRet ] = n;
 		}
 		map<float, int > ::iterator it = openEdgeIndex.begin();
+		
 		int cellAEdgeIndex=(*it).second; //a의 열린 엣지인덱스는?
 		if( cellA.edge[ cellAEdgeIndex ].bUsePath == false )
 			return false;
@@ -687,7 +664,6 @@ namespace fw
 
 		vector<fwPathNode>::iterator it_pinFocus = pathList.begin();
 		vector<fwPathNode>::iterator it_testFocus = pathList.begin();
-		//for_each( pathList.begin(), pathList.end()-1, OmitPathProc() );
 
 		while( it_testFocus != pathList.end() )
 		{
@@ -726,11 +702,11 @@ namespace fw
 
 		pathList.clear();
 		g_PathHeap.clear();
-		visitedNodeList.clear();
+		visitedHeapNodeMap.clear();
 
 		// 새로운 이웃셀을 체크할때 여기에 있는지 체크해본뒤 있다면 건너뜀.
 		int  currCell = startCellIndex;
-		fwPathHeapNode node( -1, startCellIndex, 0, -1, ComputeHeuristic( start_pos, end_pos ) );
+		fwHeapNode node( -1, startCellIndex, 0, -1, ComputeHeuristic( start_pos, end_pos ) );
 		g_PathHeap.AddPathNode( node );
 
 		if( currCell == endCellIndex  )
@@ -749,12 +725,12 @@ namespace fw
 		{
 			while( g_PathHeap.empty() == false  )
 			{
-				fwPathHeapNode currentNode;
+				fwHeapNode currentNode;
 				g_PathHeap.Top(currentNode);
 				g_PathHeap.PopHead();
-				visitedNodeList.insert( pair< int, fwPathHeapNode>( currentNode.kCurrentCell_Index ,currentNode) ); 
+				visitedHeapNodeMap.insert( pair< int, fwHeapNode>( currentNode.kIndex_CurrentCell ,currentNode) ); 
 
-				if( currentNode.kCurrentCell_Index == endCellIndex ) //끝에서 부터 시작위치로 가는것이기에..
+				if( currentNode.kIndex_CurrentCell == endCellIndex ) //끝에서 부터 시작위치로 가는것이기에..
 					break;
 
 				//PROF_BEGIN();
@@ -766,7 +742,7 @@ namespace fw
 
 			buildPath( endCellIndex, start_pos, end_pos, pathList );
 			Optimize_OmitPath( pathList ); // 직선경로는 생략시킴.
-			Optimize_FineTuning( pathList ); // 생략된 경로를 미세조정함.
+			//Optimize_FineTuning( pathList ); // 생략된 경로를 미세조정함.
 		}
 	}
 

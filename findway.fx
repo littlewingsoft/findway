@@ -87,13 +87,14 @@ struct PS_OUTPUT
 // This shader outputs the pixel's color by modulating the texture's
 // color with diffuse material color
 //--------------------------------------------------------------------------------------
+//
 PS_OUTPUT RenderScenePS( VS_OUTPUT In ) 
 { 
     PS_OUTPUT Output;
 
     // Lookup mesh texture and modulate it with diffuse
-    Output.RGBColor = tex2D(MeshTextureSampler, In.TextureUV) * In.Diffuse;
-
+    Output.RGBColor = float4(1,0,0,1);//tex2D(MeshTextureSampler, In.TextureUV) * In.Diffuse;
+	
     return Output;
 }
 

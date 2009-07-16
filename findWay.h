@@ -84,16 +84,16 @@ namespace fw
 	struct fwEdge
 	{
 		bool bUsePath;
-		int NeighborIndex; 
+		int NeighborCellIndex; 
 		D3DXVECTOR3 center; //ab - bc- ca 순
 		float		arrivalCost;//삼각형중심에서 각ab, bc,ca 순으로 중심까지 거리값. 	
 		
-		fwEdge(): bUsePath(false),NeighborIndex(-1), center(0,0,0),arrivalCost(0.0f)
+		fwEdge(): bUsePath(false),NeighborCellIndex(-1), center(0,0,0),arrivalCost(0.0f)
 		{
 		}
 	};
 
-	// 길찾기에 쓰일 재료. 미리 익스포터에서 preCalculation 해놓는다. 
+	// 길찾기에 쓰일 재료. 미리 익스포터에서 preCalculation 해놓은 정보를 담는다.
 	// 자신의 중점과 이웃셀의 정보를 모두 담아놓음.
 	struct fwNaviCell
 	{
@@ -111,7 +111,7 @@ namespace fw
 
 
 	//시작점과 목표점에대하여 최종 가중치를 저장하고 
-	//셀인덱스를 저장해놓는다.
+	//cell Index를 저장해놓는곳.
 	struct fwHeapNode
 	{
 		// 현재 셀이 어느 부모와 가장 거리비용이 싼지 저장해놓고 
@@ -124,7 +124,7 @@ namespace fw
 		// 현재 가르키는 셀
 		int kIndex_CurrentCell; 
 
-		// fwNaviCell.center 의 인덱스값. 자신의 이웃과 공유하는 edge 의 인덱스. 
+		// 자신의 이웃과 공유하는 edge 의 인덱스. 
 		// 자식은 부모를 알고 있다. 자신의 부모가 결정될때 셋팅될값. 길찾기 할때마다 계속 바뀔것임.
 		int kIndex_NeighborEdge; 
 

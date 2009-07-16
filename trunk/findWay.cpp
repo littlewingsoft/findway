@@ -181,7 +181,7 @@ namespace fw
 					for( int n=0;n<3; n++) // 이웃 3개의 정보를 셋팅.
 					{
 						const char* szNeighborIndex = pkChildElem->Attribute("NeighborFaceIndex");
-						cell.edge[n].NeighborIndex = atoi( szNeighborIndex );
+						cell.edge[n].NeighborCellIndex = atoi( szNeighborIndex );
 						sscanf_s( pkChildElem->GetText(), "[%f, %f, %f] ( %f )", 
 								  &cell.edge[n].center.x, &cell.edge[n].center.y, 
 								  &cell.edge[n].center.z, &cell.edge[n].arrivalCost);
@@ -468,7 +468,7 @@ namespace fw
 		// 패스힙에선 가장 가능성 높은 녀석이 대가리가 됨.
 		for( int edgeIndex= 0; edgeIndex<3; edgeIndex++ )
 		{
-			int neighborIndex = focusCell.edge[ edgeIndex ].NeighborIndex;
+			int neighborIndex = focusCell.edge[ edgeIndex ].NeighborCellIndex;
 			int cnt = visitedHeapNodeMap.count( neighborIndex );
 			if( neighborIndex == -1 || cnt != 0 )  // 이웃이 있어야함.
 				continue;
@@ -611,6 +611,25 @@ namespace fw
 		return true;
 	}
 
+	int findOpenEdgeIndex( int cellIndexA, int cellIndexB )
+	{
+		const fwMesh& kMesh = GetNaviMesh();
+		const fwNaviCell& cellA = kMesh.CellBuffer[ cellIndexA ];
+		const fwNaviCell& cellB = kMesh.CellBuffer[ cellIndexB ];
+
+		map<float, int > openEdgeIndex;
+
+		for( int n=0; n< 3; n++)
+		{
+			const D3DXVECTOR3& vret = cellA.edge[n].center - cellB.center;
+			float fRet = D3DXVec3Length( &vret );
+			openEdgeIndex[ fRet ] = n;
+		}
+		map<float, int > ::iterator it = openEdgeIndex.begin();
+
+		return (*it).second; //a의 열린 엣지인덱스는?	
+	}
+
 	// 각 셀의 경로로 쓰이는 엣지인덱스를 각각 얻어냄.
 	// pinFocus셀과 testFocus셀을 연결해보고 
 	// 서로가 향하는 가장가까운 엣지의 인덱스를 계산해냄
@@ -619,33 +638,19 @@ namespace fw
 	// 하나라도 틀리다면 false
 	bool IsShowEachOther( int cellIndexA, int cellIndexB )
 	{
+		return true;
+
 		const fwMesh& kMesh = GetNaviMesh();
 		const fwNaviCell& cellA = kMesh.CellBuffer[ cellIndexA ];
 		const fwNaviCell& cellB = kMesh.CellBuffer[ cellIndexB ];
 
-		map<float, int > openEdgeIndex;
-		for( int n=0; n< 3; n++)
-		{
-			D3DXVECTOR3 vret = cellA.edge[n].center - cellB.center;
-			float fRet = D3DXVec3Length( &vret );
-			openEdgeIndex[ fRet ] = n;
-		}
-		map<float, int > ::iterator it = openEdgeIndex.begin();
-		
-		int cellAEdgeIndex=(*it).second; //a의 열린 엣지인덱스는?
-		if( cellA.edge[ cellAEdgeIndex ].bUsePath == false )
+		int edgeA = findOpenEdgeIndex( cellIndexA , cellIndexB );
+		if( cellA.edge[ edgeA ].bUsePath == false )
 			return false;
 
-		openEdgeIndex.clear();
-		for( int n=0; n< 3; n++)
-		{
-			D3DXVECTOR3 vret = cellB.edge[n].center - cellA.center;
-			float fRet = D3DXVec3Length( &vret );
-			openEdgeIndex[ fRet ] = n;
-		}
-		it = openEdgeIndex.begin();
-		int cellBEdgeIndex=(*it).second;
-		if( cellB.edge[ cellBEdgeIndex ].bUsePath == false )
+
+		int edgeB= findOpenEdgeIndex( cellIndexB, cellIndexA );
+		if( cellB.edge[ edgeB ].bUsePath == false )
 			return false;
 
 		return true;
@@ -675,6 +680,7 @@ namespace fw
 				// 무효한 애들은 한방에 다 빼버림.
 				it_pinFocus = pathList.erase( it_pinFocus );
 				it_testFocus = it_pinFocus;
+				//continue;
 			}
 			else 
 			{
